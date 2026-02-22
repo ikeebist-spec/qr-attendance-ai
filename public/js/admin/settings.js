@@ -9,8 +9,8 @@ window.renderSections = function () {
     if (badgesEl) {
         badgesEl.innerHTML = window.sections.map(sec => `
             <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm font-medium text-gray-700 flex items-center space-x-1">
-                <span>${sec}</span>
-                <button class="delete-section-btn text-red-400 hover:text-red-600 focus:outline-none" data-sec="${sec}">
+                <span>${window.escapeHTML(sec)}</span>
+                <button class="delete-section-btn text-red-400 hover:text-red-600 focus:outline-none" data-sec="${window.escapeHTML(sec)}">
                     <i data-lucide="x" class="w-3 h-3 pointer-events-none"></i>
                 </button>
             </span>
@@ -23,9 +23,9 @@ window.renderSections = function () {
         });
     }
 
-    if (secSelect) secSelect.innerHTML = window.sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
+    if (secSelect) secSelect.innerHTML = window.sections.map(sec => `<option value="${window.escapeHTML(sec)}">${window.escapeHTML(sec)}</option>`).join('');
     if (filterSel) {
-        filterSel.innerHTML = `<option value="All">All Sections</option>` + window.sections.map(sec => `<option value="${sec}">Section ${sec}</option>`).join('');
+        filterSel.innerHTML = `<option value="All">All Sections</option>` + window.sections.map(sec => `<option value="${window.escapeHTML(sec)}">Section ${window.escapeHTML(sec)}</option>`).join('');
         filterSel.value = window.sectionFilter;
     }
 };

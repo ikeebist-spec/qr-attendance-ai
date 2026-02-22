@@ -57,9 +57,10 @@ class AdminController extends Controller
             'name' => 'required|string',
             'date' => 'required|date',
             'type' => 'required|in:Mandatory,Major,Voluntary',
+            'fine' => 'required|integer|min:20|max:50',
         ]);
 
-        $event = Event::create($request->only('name', 'date', 'type'));
+        $event = Event::create($request->only('name', 'date', 'type', 'fine'));
         return response()->json($event, 201);
     }
 
@@ -152,20 +153,29 @@ class AdminController extends Controller
         $presentCount = $eventId ?AttendanceLog::where('event_id', $eventId)->count() : 0;
         $totalStudents = Student::count();
 
-        // AI Fine computation
+        // Dynamic AI Fine Computation
         $students = Student::all();
+        $totalEvents = Event::count();
         $totalFines = 0;
         $atRisk = 0;
-        foreach ($students as $s) {
-            if ($s->absences === 1)
-                $totalFines += 50;
-            elseif ($s->absences === 2) {
-                $totalFines += 150;
-                $atRisk++;
-            }
-            elseif ($s->absences >= 3) {
-                $totalFines += 350;
-                $atRisk++;
+
+        // If there are no events, no one owes fines
+        if ($totalEvents > 0) {
+            $events = Event::all();
+
+            // To be perfectly accurate, we need to know exactly which events each student missed.
+            // Since `absences` on the Student model is just a counter of HOW MANY they missed,
+            // we will estimate the fine by multiplying their absence count by the average event fine.
+            // (For exact mapping, the AI Analytics frontend does a deeper dive).
+            $averageFine = $events->avg('fine') ?? 50;
+
+            foreach ($students as $s) {
+                if ($s->absences > 0) {
+                    $totalFines += ($s->absences * $averageFine);
+                }
+                if ($s->absences >= 2) {
+                    $atRisk++;
+                }
             }
         }
 

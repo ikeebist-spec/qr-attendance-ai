@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->string('name');
             $table->date('date');
             $table->string('type')->default('Mandatory'); // Mandatory, Major, Voluntary
+            $table->integer('fine')->default(50); // Dynamic event fine (20-50 PHP)
             $table->timestamps();
         });
     }

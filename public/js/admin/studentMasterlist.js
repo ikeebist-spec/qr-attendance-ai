@@ -41,21 +41,21 @@ window.renderStudents = function () {
 
     tbody.innerHTML = filtered.map(student => `
         <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-3 font-mono text-xs text-gray-600">${student.student_id}</td>
-            <td class="px-4 py-3 font-medium text-gray-900">${student.name}</td>
-            <td class="px-4 py-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-medium text-gray-700">${student.section}</span></td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-600">${window.escapeHTML(student.student_id)}</td>
+            <td class="px-4 py-3 font-medium text-gray-900">${window.escapeHTML(student.name)}</td>
+            <td class="px-4 py-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-medium text-gray-700">${window.escapeHTML(student.section)}</span></td>
             <td class="px-4 py-3 text-center">
                 <span class="px-2 py-1 rounded text-xs font-bold ${student.absences > 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${student.absences}</span>
             </td>
             <td class="px-4 py-3 text-center">
-                <button onclick="window.openQRModal(${JSON.stringify(student).replace(/"/g, '&quot;')})"
+                <button onclick="window.openQRModal(${window.escapeHTML(JSON.stringify(student)).replace(/"/g, '&quot;')})"
                     class="inline-flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/><path d="M14 14h2v2h-2z M18 14h2v2h-2z M14 18h2v2h-2z M18 18h2v2h-2z" stroke-width="0" fill="currentColor"/></svg>
                     <span>View QR</span>
                 </button>
             </td>
             <td class="px-4 py-3 text-center">
-                <button onclick="window.deleteStudent(${student.id}, '${student.name.replace(/'/g, "\\'")}')"
+                <button onclick="window.deleteStudent(${student.id}, '${window.escapeHTML(student.name).replace(/'/g, "\\'")}')"
                     class="inline-flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke-width="2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke-width="2"/><path d="M10 11v6M14 11v6" stroke-width="2"/></svg>
                     <span>Delete</span>
@@ -245,16 +245,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('upload-paste-list').innerHTML = parsed.map((s, i) => `
             <div class="flex items-center space-x-2 bg-indigo-900/40 rounded-lg px-3 py-1.5 text-xs">
                 <span class="text-indigo-400 font-mono w-5 flex-shrink-0">${i + 1}</span>
-                <input data-field="student_id" value="${s.student_id}"
+                <input data-field="student_id" value="${window.escapeHTML(s.student_id)}"
                     class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white w-28 flex-shrink-0 outline-none focus:border-indigo-400 font-mono" />
-                <input data-field="name" value="${s.name}"
+                <input data-field="name" value="${window.escapeHTML(s.name)}"
                     class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white flex-1 outline-none focus:border-indigo-400" />
             </div>
         `).join('');
 
         // Populate section dropdown
         const sel = document.getElementById('upload-paste-section');
-        if (sel) sel.innerHTML = (window.sections || []).map(sec => `<option value="${sec}">${sec}</option>`).join('');
+        if (sel) sel.innerHTML = (window.sections || []).map(sec => `<option value="${window.escapeHTML(sec)}">${window.escapeHTML(sec)}</option>`).join('');
 
         document.getElementById('upload-paste-count').innerText = parsed.length;
         document.getElementById('upload-paste-result').classList.remove('hidden');
@@ -363,9 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
             list.innerHTML = extracted.map((s, i) => `
                 <div class="flex items-center space-x-2 bg-indigo-900/40 rounded-lg px-3 py-2 text-xs">
                     <span class="text-indigo-400 font-mono w-5 flex-shrink-0">${i + 1}</span>
-                    <input data-field="student_id" value="${(s.student_id || 'TBD').replace(/"/g, '')}"
-                        class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white w-28 flex-shrink-0 outline-none focus:border-indigo-400 font-mono" placeholder="Student ID" />
-                    <input data-field="name" value="${(s.name || '').replace(/"/g, '')}"
+                    <input data-field="student_id" value="${window.escapeHTML(s.student_id || 'TBD')}"
+                        class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white w-28 flex-shrink-0 outline-none focus:border-indigo-400 font-mono" placeholder="ID" />
+                    <input data-field="name" value="${window.escapeHTML(s.name || '')}"
                         class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white flex-1 outline-none focus:border-indigo-400" placeholder="Full Name" />
                 </div>
             `).join('');
@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sectionSel = document.getElementById('ai-upload-section-select');
             if (sectionSel) {
                 sectionSel.innerHTML = (window.sections || []).map(sec =>
-                    `<option value="${sec}">${sec}</option>`
+                    `<option value="${window.escapeHTML(sec)}">${window.escapeHTML(sec)}</option>`
                 ).join('');
             }
 
@@ -457,16 +457,16 @@ document.addEventListener('DOMContentLoaded', () => {
         list.innerHTML = parsed.map((s, i) => `
             <div class="flex items-center space-x-2 bg-indigo-900/40 rounded-lg px-3 py-2 text-xs">
                 <span class="text-indigo-400 font-mono w-5 flex-shrink-0">${i + 1}</span>
-                <input data-field="student_id" value="${s.student_id}"
+                <input data-field="student_id" value="${window.escapeHTML(s.student_id)}"
                     class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white w-28 flex-shrink-0 outline-none focus:border-indigo-400 font-mono" placeholder="ID" />
-                <input data-field="name" value="${s.name}"
+                <input data-field="name" value="${window.escapeHTML(s.name)}"
                     class="bg-indigo-950/60 border border-indigo-700 rounded px-2 py-1 text-white flex-1 outline-none focus:border-indigo-400" placeholder="Full Name" />
             </div>
         `).join('');
 
         // Populate section dropdown
         const secSel = document.getElementById('paste-section-select');
-        if (secSel) secSel.innerHTML = (window.sections || []).map(sec => `<option value="${sec}">${sec}</option>`).join('');
+        if (secSel) secSel.innerHTML = (window.sections || []).map(sec => `<option value="${window.escapeHTML(sec)}">${window.escapeHTML(sec)}</option>`).join('');
 
         document.getElementById('paste-extracted-count').innerText = parsed.length;
         document.getElementById('paste-result').classList.remove('hidden');

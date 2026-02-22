@@ -27,8 +27,8 @@ window.renderLogs = function () {
             <li class="px-6 py-4 hover:bg-gray-50 transition-colors flex items-start space-x-4">
                 <div class="mt-1 bg-blue-100 p-2 rounded-full text-blue-600"><i data-lucide="activity" class="w-4 h-4"></i></div>
                 <div>
-                    <p class="text-sm text-gray-800 font-medium">${log.action}</p>
-                    <p class="text-xs text-gray-500 mt-1">By <span class="font-semibold">${log.user}</span> · ${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</p>
+                    <p class="text-sm text-gray-800 font-medium">${window.escapeHTML(log.action)}</p>
+                    <p class="text-xs text-gray-500 mt-1">By <span class="font-semibold">${window.escapeHTML(log.user)}</span> · ${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</p>
                 </div>
             </li>
         `).join('');

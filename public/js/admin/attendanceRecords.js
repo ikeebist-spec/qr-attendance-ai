@@ -22,10 +22,10 @@ window.renderRecords = async function () {
             table.classList.remove('hidden');
             tbody.innerHTML = logs.map(log => `
                 <tr class="border-b border-gray-50 hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900">${log.student_id}</td>
-                    <td class="px-6 py-4 text-gray-700">${log.student_name}</td>
-                    <td class="px-6 py-4 text-gray-600">${log.section}</td>
-                    <td class="px-6 py-4 text-gray-500">${log.scanned_at}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${window.escapeHTML(log.student_id)}</td>
+                    <td class="px-6 py-4 text-gray-700">${window.escapeHTML(log.student_name)}</td>
+                    <td class="px-6 py-4 text-gray-600">${window.escapeHTML(log.section)}</td>
+                    <td class="px-6 py-4 text-gray-500">${window.escapeHTML(log.scanned_at)}</td>
                 </tr>
             `).join('');
         }

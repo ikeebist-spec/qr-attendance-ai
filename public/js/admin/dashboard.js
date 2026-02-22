@@ -29,6 +29,17 @@ window.apiDelete = async (url) => {
     });
 };
 
+// ─── XSS Protection ──────────────────────────────────────────────────────────
+window.escapeHTML = function (str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
 // ─── Toast ───────────────────────────────────────────────────────────────────
 window.showToast = function (message, type = 'success') {
     const container = document.getElementById('toast-container');

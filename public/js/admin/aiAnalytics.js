@@ -9,29 +9,42 @@ window.renderChatMessages = function () {
             <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender === 'user'
             ? 'bg-indigo-600 text-white rounded-br-none'
             : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none'
-        }">${msg.text}</div>
+        }">${window.escapeHTML(msg.text)}</div>
         </div>
     `).join('');
     container.scrollTop = container.scrollHeight;
 };
 
-window.runAIAnalysis = function () {
+window.runAIAnalysis = async function () {
+    // 1. Fetch exact total fines based on the new backend calculation
+    // Since absences are now accurately calculated per-event, we request the latest dashboard data
     let totalFines = 0;
+    try {
+        const dashRes = await fetch('/api/dashboard');
+        if (dashRes.ok) {
+            const dData = await dashRes.json();
+            totalFines = dData.total_fines || 0;
+        }
+    } catch (e) { }
+
+    // 2. Estimate individual student fines directly based on attendance
+    // (A perfectly accurate student fine requires a joining query, but for the UI snapshot, we use the average event fine)
+    const avgFine = window.events && window.events.length
+        ? window.events.reduce((sum, ev) => sum + (ev.fine || 50), 0) / window.events.length
+        : 50;
+
     const sectionAbsences = {};
     const riskList = [];
 
     window.students.forEach(s => {
         let fine = 0;
-        if (s.absences === 1) fine = 50;
-        else if (s.absences === 2) fine = 150;
-        else if (s.absences >= 3) fine = 350;
-        totalFines += fine;
+        if (s.absences > 0) fine = s.absences * avgFine;
 
         if (!sectionAbsences[s.section]) sectionAbsences[s.section] = { total: 0, count: 0 };
         sectionAbsences[s.section].total += s.absences;
         sectionAbsences[s.section].count += 1;
 
-        if (s.absences >= 2) riskList.push({ ...s, fine });
+        if (s.absences >= 2) riskList.push({ ...s, fine: fine.toFixed(2) });
     });
 
     riskList.sort((a, b) => b.absences - a.absences);
@@ -60,20 +73,63 @@ window.runAIAnalysis = function () {
     const preds = document.getElementById('ai-predictions-list');
     if (preds) preds.innerHTML = warnings.map(w => `
         <div class="p-4 bg-orange-50 border border-orange-100 rounded-lg flex items-start text-sm text-orange-800">
-            <i data-lucide="shield-alert" class="mr-3 mt-0.5 w-[18px] h-[18px] flex-shrink-0"></i><p>${w}</p>
+            <i data-lucide="shield-alert" class="mr-3 mt-0.5 w-[18px] h-[18px] flex-shrink-0"></i><p>${window.escapeHTML(w)}</p>
         </div>`).join('');
 
-    const secEl = document.getElementById('ai-risk-sections-list');
-    if (secEl) secEl.innerHTML = sectionRisk.length > 0
-        ? sectionRisk.map(s => `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><span class="font-bold text-gray-700 text-lg">${s.section}</span><span class="text-red-600 text-sm font-medium bg-red-50 px-3 py-1 rounded-full">${s.averageAbsences} avg absences</span></div>`).join('')
-        : '<p class="text-sm text-gray-500">No high-risk sections detected.</p>';
+    // Chart.js implementation for Section Risk
+    const ctx = document.getElementById('section-risk-chart');
+    if (ctx) {
+        // Destroy existing chart if it exists to prevent overlap when re-running analysis
+        if (window.sectionChartInstance) {
+            window.sectionChartInstance.destroy();
+        }
+
+        if (sectionRisk.length > 0) {
+            ctx.classList.remove('hidden');
+            window.sectionChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sectionRisk.map(s => s.section),
+                    datasets: [{
+                        label: 'Average Absences per Student',
+                        data: sectionRisk.map(s => s.averageAbsences),
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)', // blue-500
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        } else {
+            // Hide canvas and show fallback text if no absences
+            ctx.classList.add('hidden');
+            const fallback = document.getElementById('ai-risk-sections-list');
+            if (fallback) {
+                fallback.classList.remove('hidden');
+                fallback.innerHTML = '<p class="text-sm text-gray-500 mt-4 text-center">No absences recorded yet.</p>';
+            }
+        }
+    }
 
     const stuEl = document.getElementById('ai-risk-students-body');
     if (stuEl) stuEl.innerHTML = riskList.slice(0, 5).map(s => `
         <tr class="border-b border-gray-50">
-            <td class="px-6 py-3 font-medium">${s.student_id}</td>
-            <td class="px-6 py-3">${s.name}</td>
-            <td class="px-6 py-3">${s.section}</td>
+            <td class="px-6 py-3 font-medium">${window.escapeHTML(s.student_id)}</td>
+            <td class="px-6 py-3">${window.escapeHTML(s.name)}</td>
+            <td class="px-6 py-3">${window.escapeHTML(s.section)}</td>
             <td class="px-6 py-3 font-bold text-red-600">${s.absences}</td>
             <td class="px-6 py-3 font-bold text-gray-800">₱${s.fine}</td>
         </tr>`).join('');

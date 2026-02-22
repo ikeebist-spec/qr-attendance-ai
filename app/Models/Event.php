@@ -3,5 +3,5 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class Event extends Model
 {
-    protected $fillable = ['name', 'date', 'type'];
+    protected $fillable = ['name', 'date', 'type', 'fine'];
 }

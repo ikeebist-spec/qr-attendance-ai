@@ -23,11 +23,12 @@
         </div>
 
         <!-- At-Risk Sections -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 class="font-bold text-gray-800 mb-4 text-lg">At-Risk Sections (Averaged)</h3>
-            <div id="ai-risk-sections-list" class="space-y-3">
-                <!-- Rendered via JS -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
+            <h3 class="font-bold text-gray-800 mb-4 text-lg">Absenteeism by Section</h3>
+            <div class="relative flex-1 w-full" style="min-height: 200px;">
+                <canvas id="section-risk-chart"></canvas>
             </div>
+            <div id="ai-risk-sections-list" class="hidden"></div>
         </div>
     </div>
 
