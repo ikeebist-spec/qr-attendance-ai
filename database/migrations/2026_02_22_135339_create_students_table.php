@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->string('student_id')->unique();
             $table->string('name');
-            $table->string('section');
+            $table->string('year_and_section');
             $table->integer('absences')->default(0);
             $table->timestamps();
         });

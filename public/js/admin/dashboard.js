@@ -6,8 +6,8 @@ window.selectedEventId = null;
 window.students = [];
 window.attendanceLogs = [];
 window.activityLogs = [];
-window.sections = [];
-window.sectionFilter = 'All';
+window.yearAndSections = [];
+window.yearAndSectionFilter = 'All';
 window.insights = { totalFines: 0, patternWarnings: [], atRiskStudents: [], atRiskSections: [] };
 
 // ─── CSRF token helper for POST/DELETE ────────────────────────────────────────
@@ -44,7 +44,7 @@ window.escapeHTML = function (str) {
 window.showToast = function (message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 text-white animate-fade-in-down ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+    toast.className = `px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 text-white animate-fade-in-down ${type === 'error' ? 'bg-red-500' : 'bg-purple-500'}`;
     toast.innerHTML = type === 'error'
         ? `<i data-lucide="x-circle" class="w-5 h-5"></i><span class="font-medium">${message}</span>`
         : `<i data-lucide="check-circle" class="w-5 h-5"></i><span class="font-medium">${message}</span>`;
@@ -60,9 +60,9 @@ window.switchTab = function (tabId) {
     window.activeTab = tabId;
     document.getElementById('header-title').innerText = tabId.replace('-', ' ');
     document.querySelectorAll('.sidebar-btn').forEach(btn => {
-        btn.className = "sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium text-green-100 hover:bg-green-800/50";
+        btn.className = "sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium text-purple-100 hover:bg-purple-800/50";
         if (btn.dataset.tab === tabId)
-            btn.className = "sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium bg-green-800 text-white";
+            btn.className = "sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium bg-purple-800 text-white";
     });
     if (tabId === 'scan' && window.initQRScanner) {
         document.getElementById('scan-event-name').innerText = window.events.find(e => e.id === window.selectedEventId)?.name || 'None';
@@ -89,15 +89,15 @@ window.renderDashboard = async function () {
 // ─── App Bootstrap ────────────────────────────────────────────────────────────
 async function bootstrapApp() {
     // Load all data from DB
-    const [eventsRes, studentsRes, sectionsRes, logsRes] = await Promise.all([
+    const [eventsRes, studentsRes, yearAndSectionsRes, logsRes] = await Promise.all([
         fetch('/api/events'),
         fetch('/api/students'),
-        fetch('/api/sections'),
+        fetch('/api/year-and-sections'),
         fetch('/api/logs'),
     ]);
     window.events = await eventsRes.json();
     window.students = await studentsRes.json();
-    window.sections = await sectionsRes.json();
+    window.yearAndSections = await yearAndSectionsRes.json();
     window.activityLogs = await logsRes.json();
 
     if (window.events.length > 0)
@@ -105,13 +105,14 @@ async function bootstrapApp() {
 
     // Render all modules
     if (window.renderEventSelector) window.renderEventSelector();
-    if (window.renderSections) window.renderSections();
+    if (window.renderYearAndSections) window.renderYearAndSections();
     if (window.renderDashboard) window.renderDashboard();
     if (window.renderEvents) window.renderEvents();
     if (window.renderRecords) window.renderRecords();
     if (window.renderStudents) window.renderStudents();
     if (window.runAIAnalysis) window.runAIAnalysis();
     if (window.renderLogs) window.renderLogs();
+    if (window.renderFines) window.renderFines();
 
     lucide.createIcons();
 }

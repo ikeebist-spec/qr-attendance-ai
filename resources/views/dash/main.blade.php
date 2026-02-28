@@ -34,6 +34,7 @@
     <script src="{{ asset('js/admin/attendanceRecords.js') }}"></script>
     <script src="{{ asset('js/admin/studentMasterlist.js') }}"></script>
     <script src="{{ asset('js/admin/aiAnalytics.js') }}"></script>
+    <script src="{{ asset('js/admin/fineComputation.js') }}"></script>
     <script src="{{ asset('js/admin/activityLogs.js') }}"></script>
     <script src="{{ asset('js/admin/settings.js') }}"></script>
 </body>

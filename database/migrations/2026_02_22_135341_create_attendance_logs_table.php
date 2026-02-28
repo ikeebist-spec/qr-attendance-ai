@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->string('student_id');
             $table->unsignedBigInteger('event_id');
             $table->string('student_name');
-            $table->string('section');
+            $table->string('year_and_section');
             $table->string('scanned_at');
             $table->timestamps();
 

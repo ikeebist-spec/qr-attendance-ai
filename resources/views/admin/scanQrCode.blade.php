@@ -14,7 +14,7 @@
             </div>
             
             <div class="mt-8 flex flex-wrap justify-center gap-4">
-                <button onclick="window.simulateScan('2021-0001')" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">Test Scan (Valid)</button>
+                <button onclick="window.simulateScan('2021-0001')" class="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 transition-colors">Test Scan (Valid)</button>
                 <button onclick="window.simulateScan('INVALID-QR')" class="px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors">Test Scan (Invalid)</button>
             </div>
         </div>

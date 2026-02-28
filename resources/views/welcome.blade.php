@@ -44,6 +44,7 @@
                 @include('admin.attendanceRecords')
                 @include('admin.studentMasterlist')
                 @include('admin.aiAnalytics')
+                @include('admin.fineComputation')
                 @include('admin.activityLogs')
                 @include('admin.settings')
             </main>

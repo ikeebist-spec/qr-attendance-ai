@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Admin Account – ESSU CCS</title>
+    <title>Reset Password – ESSU CCS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -97,18 +97,13 @@
         <div class="animated-ticks-glow"></div>
     </div>
 
-    <!-- Register Form Card -->
+    <!-- Form Card -->
     <div class="glass-panel w-full rounded-[2rem] p-8 relative z-20">
         
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-violet-300 tracking-wide drop-shadow-lg">Signup</h1>
+            <h1 class="text-2xl font-bold text-violet-300 tracking-wide drop-shadow-lg">Reset Password</h1>
+            <p class="text-violet-200/70 mt-2 text-xs">Enter your new password below.</p>
         </div>
-
-        @if (session('error'))
-        <div class="mb-5 bg-red-900/50 border border-red-500/50 rounded-xl p-3 text-sm text-red-200 text-center">
-            {{ session('error') }}
-        </div>
-        @endif
 
         @if ($errors->any())
         <div class="mb-5 bg-red-900/50 border border-red-500/50 rounded-xl p-3">
@@ -120,25 +115,19 @@
         </div>
         @endif
 
-        <form method="POST" action="/register" class="space-y-5">
+        <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
             @csrf
 
+            <input type="hidden" name="token" value="{{ $token }}">
+
             <div class="relative">
-                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Full Name</label>
-                <input type="text" name="name" value="{{ old('name') }}" required
-                    class="glass-input w-full rounded-full px-5 py-3 text-sm"
-                    placeholder="Juan Dela Cruz">
-            </div>
-
-            <div class="relative mt-5">
                 <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" required
-                    class="glass-input w-full rounded-full px-5 py-3 text-sm"
-                    placeholder="yourname@gmail.com">
+                <input type="email" name="email" value="{{ $email ?? old('email') }}" required autofocus readonly
+                    class="glass-input w-full rounded-full px-5 py-3 text-sm cursor-not-allowed opacity-70">
             </div>
 
             <div class="relative mt-5">
-                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Password</label>
+                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">New Password</label>
                 <input type="password" name="password" required minlength="8"
                     class="glass-input w-full rounded-full px-5 py-3 text-sm"
                     placeholder="Min 8 characters">
@@ -153,12 +142,8 @@
 
             <button type="submit"
                 class="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:from-violet-500 hover:to-purple-400 text-white font-bold py-3 rounded-full transition-all shadow-[0_0_15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_25px_rgba(168,85,247,0.8)] text-sm tracking-wider uppercase mt-6">
-                Create Account
+                Reset Password
             </button>
-
-            <div class="text-center mt-6">
-                <a href="{{ route('login') }}" class="text-sm font-semibold text-violet-300 hover:text-white transition">Back to Login</a>
-            </div>
         </form>
     </div>
 

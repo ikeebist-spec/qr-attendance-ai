@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Admin Account – ESSU CCS</title>
+    <title>Forgot Password – ESSU CCS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -86,27 +86,28 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden py-10">
+<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
 <div class="absolute inset-0 bg-black/50 z-0 pointer-events-none"></div>
 
-<div class="relative z-10 w-full max-w-[400px] flex items-center justify-center">
+<div class="relative z-10 w-full max-w-sm flex items-center justify-center">
 
-    <div class="ring-wrapper hidden sm:block h-[500px]">
+    <div class="ring-wrapper hidden sm:block h-[450px]">
         <div class="animated-ticks"></div>
         <div class="animated-ticks-glow"></div>
     </div>
 
-    <!-- Register Form Card -->
-    <div class="glass-panel w-full rounded-[2rem] p-8 relative z-20">
-        
+    <!-- Card -->
+    <div class="glass-panel w-full rounded-[2rem] p-8 md:p-10 relative z-20">
+
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-violet-300 tracking-wide drop-shadow-lg">Signup</h1>
+            <h1 class="text-2xl font-bold text-violet-300 tracking-wide drop-shadow-lg">Password Reset</h1>
+            <p class="text-violet-200/70 mt-2 text-xs">Enter your email to receive a secure link.</p>
         </div>
 
-        @if (session('error'))
-        <div class="mb-5 bg-red-900/50 border border-red-500/50 rounded-xl p-3 text-sm text-red-200 text-center">
-            {{ session('error') }}
+        @if (session('status'))
+        <div class="mb-5 bg-green-900/50 border border-green-500/50 rounded-xl p-3 text-sm text-green-200 text-center">
+            {{ session('status') }}
         </div>
         @endif
 
@@ -120,48 +121,26 @@
         </div>
         @endif
 
-        <form method="POST" action="/register" class="space-y-5">
+        <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
             @csrf
 
             <div class="relative">
-                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Full Name</label>
-                <input type="text" name="name" value="{{ old('name') }}" required
-                    class="glass-input w-full rounded-full px-5 py-3 text-sm"
-                    placeholder="Juan Dela Cruz">
-            </div>
-
-            <div class="relative mt-5">
                 <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" required
+                <input type="email" name="email" value="{{ old('email') }}" required autofocus
                     class="glass-input w-full rounded-full px-5 py-3 text-sm"
                     placeholder="yourname@gmail.com">
             </div>
 
-            <div class="relative mt-5">
-                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Password</label>
-                <input type="password" name="password" required minlength="8"
-                    class="glass-input w-full rounded-full px-5 py-3 text-sm"
-                    placeholder="Min 8 characters">
-            </div>
-
-            <div class="relative mt-5">
-                <label class="absolute -top-2.5 left-4 bg-[#140824] px-1 text-xs font-semibold text-violet-300 rounded">Confirm Password</label>
-                <input type="password" name="password_confirmation" required
-                    class="glass-input w-full rounded-full px-5 py-3 text-sm"
-                    placeholder="Repeat password">
-            </div>
-
             <button type="submit"
-                class="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:from-violet-500 hover:to-purple-400 text-white font-bold py-3 rounded-full transition-all shadow-[0_0_15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_25px_rgba(168,85,247,0.8)] text-sm tracking-wider uppercase mt-6">
-                Create Account
+                class="w-full bg-gradient-to-r from-violet-600 to-purple-500 hover:from-violet-500 hover:to-purple-400 text-white font-bold py-3 rounded-full transition-all shadow-[0_0_15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_25px_rgba(168,85,247,0.8)] text-xs tracking-wider uppercase">
+                Send Reset Link
             </button>
-
-            <div class="text-center mt-6">
-                <a href="{{ route('login') }}" class="text-sm font-semibold text-violet-300 hover:text-white transition">Back to Login</a>
-            </div>
         </form>
-    </div>
 
+        <div class="text-center mt-6">
+            <p class="text-sm text-gray-600"><a href="{{ route('login') }}" class="font-medium text-violet-300 hover:text-white transition">&larr; Back to login</a></p>
+        </div>
+    </div>
 </div>
 
 </body>

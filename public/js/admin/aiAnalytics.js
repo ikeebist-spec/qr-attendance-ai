@@ -7,7 +7,7 @@ window.renderChatMessages = function () {
     container.innerHTML = window.chatMessages.map(msg => `
         <div class="flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}">
             <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender === 'user'
-            ? 'bg-indigo-600 text-white rounded-br-none'
+            ? 'bg-purple-600 text-white rounded-br-none'
             : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none'
         }">${window.escapeHTML(msg.text)}</div>
         </div>
@@ -33,36 +33,36 @@ window.runAIAnalysis = async function () {
         ? window.events.reduce((sum, ev) => sum + (ev.fine || 50), 0) / window.events.length
         : 50;
 
-    const sectionAbsences = {};
+    const yearAndSectionAbsences = {};
     const riskList = [];
 
     window.students.forEach(s => {
         let fine = 0;
         if (s.absences > 0) fine = s.absences * avgFine;
 
-        if (!sectionAbsences[s.section]) sectionAbsences[s.section] = { total: 0, count: 0 };
-        sectionAbsences[s.section].total += s.absences;
-        sectionAbsences[s.section].count += 1;
+        if (!yearAndSectionAbsences[s.year_and_section]) yearAndSectionAbsences[s.year_and_section] = { total: 0, count: 0 };
+        yearAndSectionAbsences[s.year_and_section].total += s.absences;
+        yearAndSectionAbsences[s.year_and_section].count += 1;
 
         if (s.absences >= 2) riskList.push({ ...s, fine: fine.toFixed(2) });
     });
 
     riskList.sort((a, b) => b.absences - a.absences);
 
-    const sectionRisk = Object.keys(sectionAbsences).map(sec => {
-        const avg = sectionAbsences[sec].total / sectionAbsences[sec].count;
-        return { section: sec, averageAbsences: avg.toFixed(2) };
+    const yearAndSectionRisk = Object.keys(yearAndSectionAbsences).map(sec => {
+        const avg = yearAndSectionAbsences[sec].total / yearAndSectionAbsences[sec].count;
+        return { year_and_section: sec, averageAbsences: avg.toFixed(2) };
     }).filter(s => s.averageAbsences > 0).sort((a, b) => b.averageAbsences - a.averageAbsences);
 
     const warnings = [];
-    if (sectionRisk.length > 0 && sectionRisk[0].averageAbsences >= 2)
-        warnings.push(`Predictive Alert: Section ${sectionRisk[0].section} shows severe absenteeism. Recommend FCO intervention.`);
+    if (yearAndSectionRisk.length > 0 && yearAndSectionRisk[0].averageAbsences >= 2)
+        warnings.push(`Predictive Alert: Year and Section ${yearAndSectionRisk[0].year_and_section} shows severe absenteeism. Recommend FCO intervention.`);
     if (riskList.length > 5)
         warnings.push('Systematic Risk: High volume of students with multiple absences.');
     if (warnings.length === 0)
         warnings.push('Attendance trends are currently stable.');
 
-    window.insights = { totalFines, patternWarnings: warnings, atRiskStudents: riskList.slice(0, 5), atRiskSections: sectionRisk.slice(0, 3) };
+    window.insights = { totalFines, patternWarnings: warnings, atRiskStudents: riskList.slice(0, 5), atRiskYearAndSections: yearAndSectionRisk.slice(0, 3) };
 
     // DOM updates
     const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
@@ -84,15 +84,15 @@ window.runAIAnalysis = async function () {
             window.sectionChartInstance.destroy();
         }
 
-        if (sectionRisk.length > 0) {
+        if (yearAndSectionRisk.length > 0) {
             ctx.classList.remove('hidden');
             window.sectionChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: sectionRisk.map(s => s.section),
+                    labels: yearAndSectionRisk.map(s => s.year_and_section),
                     datasets: [{
                         label: 'Average Absences per Student',
-                        data: sectionRisk.map(s => s.averageAbsences),
+                        data: yearAndSectionRisk.map(s => s.averageAbsences),
                         backgroundColor: 'rgba(59, 130, 246, 0.5)', // blue-500
                         borderColor: 'rgb(59, 130, 246)',
                         borderWidth: 1,
@@ -129,7 +129,7 @@ window.runAIAnalysis = async function () {
         <tr class="border-b border-gray-50">
             <td class="px-6 py-3 font-medium">${window.escapeHTML(s.student_id)}</td>
             <td class="px-6 py-3">${window.escapeHTML(s.name)}</td>
-            <td class="px-6 py-3">${window.escapeHTML(s.section)}</td>
+            <td class="px-6 py-3">${window.escapeHTML(s.year_and_section)}</td>
             <td class="px-6 py-3 font-bold text-red-600">${s.absences}</td>
             <td class="px-6 py-3 font-bold text-gray-800">₱${s.fine}</td>
         </tr>`).join('');

@@ -4,14 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\Event;
-use App\Models\Section;
+use App\Models\YearAndSection;
 use App\Models\AttendanceLog;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class AdminController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+
+class AdminController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            function ($request, $next) {
+                if (!in_array($request->method(), ['GET', 'HEAD']) && $request->route()->getActionMethod() !== 'scanMasterlistPhoto') {
+                    if (auth()->check() && auth()->user()->role !== 'super_admin') {
+                        return response()->json(['error' => 'Unauthorized. Super Admin access required.'], 403);
+                    }
+                }
+                return $next($request);
+            }
+        ];
+    }
+
     // ─── STUDENTS ─────────────────────────────────────────────────────────────
 
     public function students()
@@ -24,13 +40,13 @@ class AdminController extends Controller
         $request->validate([
             'student_id' => 'required|unique:students,student_id',
             'name' => 'required|string',
-            'section' => 'required|string',
+            'year_and_section' => 'required|string',
         ]);
 
         $student = Student::create([
             'student_id' => $request->student_id,
             'name' => $request->name,
-            'section' => $request->section,
+            'year_and_section' => $request->year_and_section,
             'absences' => 0,
         ]);
 
@@ -56,35 +72,52 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string',
             'date' => 'required|date',
+            'month' => 'required|string',
             'type' => 'required|in:Mandatory,Major,Voluntary',
             'fine' => 'required|integer|min:20|max:50',
+            'start_time' => 'required|string', // Format H:i
+            'duration' => 'required|integer|min:1|max:24',
         ]);
 
-        $event = Event::create($request->only('name', 'date', 'type', 'fine'));
+        $startDateTime = \Carbon\Carbon::parse($request->date . ' ' . $request->start_time);
+        $endDateTime = (clone $startDateTime)->addHours($request->duration);
+
+        $event = Event::create([
+            'name' => $request->name,
+            'date' => $request->date,
+            'month' => $request->month,
+            'type' => $request->type,
+            'fine' => $request->fine,
+            'start_time' => $startDateTime,
+            'end_time' => $endDateTime,
+        ]);
+
         return response()->json($event, 201);
     }
 
-    // ─── SECTIONS ─────────────────────────────────────────────────────────────
+    // ─── YEAR AND SECTIONS ─────────────────────────────────────────────────────────────
 
-    public function sections()
+    public function yearAndSections()
     {
-        return response()->json(Section::orderBy('name')->pluck('name'));
+        $yearAndSections = YearAndSection::orderBy('name')->pluck('name');
+
+        return response()->json($yearAndSections);
     }
 
-    public function storeSection(Request $request)
+    public function storeYearAndSection(Request $request)
     {
-        $request->validate(['name' => 'required|unique:sections,name']);
-        $section = Section::create(['name' => strtoupper($request->name)]);
-        return response()->json($section, 201);
+        $request->validate(['name' => 'required|unique:year_and_sections,name']);
+        $yearAndSection = YearAndSection::create(['name' => strtoupper($request->name)]);
+        return response()->json($yearAndSection, 201);
     }
 
-    public function deleteSection($name)
+    public function deleteYearAndSection($name)
     {
-        $hasStudents = Student::where('section', $name)->exists();
+        $hasStudents = Student::where('year_and_section', $name)->exists();
         if ($hasStudents) {
-            return response()->json(['error' => "Cannot delete {$name}: Students are assigned to this section."], 422);
+            return response()->json(['error' => "Cannot delete {$name}: Students are assigned to this year and section."], 422);
         }
-        Section::where('name', $name)->delete();
+        YearAndSection::where('name', $name)->delete();
         return response()->json(['success' => true]);
     }
 
@@ -93,6 +126,11 @@ class AdminController extends Controller
     public function attendance(Request $request)
     {
         $logs = AttendanceLog::when($request->event_id, fn($q) => $q->where('event_id', $request->event_id))
+            ->when($request->month, function ($q) use ($request) {
+                // If filtering by month, we need to join with events or find event IDs for that month
+                $eventIds = Event::where('month', $request->month)->pluck('id');
+                return $q->whereIn('event_id', $eventIds);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
         return response()->json($logs);
@@ -104,7 +142,8 @@ class AdminController extends Controller
             'student_id' => 'required',
             'event_id' => 'required|integer',
             'student_name' => 'required|string',
-            'section' => 'required|string',
+            'year_and_section' => 'required|string',
+            'scanned_at' => 'nullable|string',
         ]);
 
         // Check for duplicate
@@ -120,8 +159,8 @@ class AdminController extends Controller
             'student_id' => $request->student_id,
             'event_id' => $request->event_id,
             'student_name' => $request->student_name,
-            'section' => $request->section,
-            'scanned_at' => now()->toTimeString(),
+            'year_and_section' => $request->year_and_section,
+            'scanned_at' => $request->scanned_at ?? now()->format('h:i A'),
         ]);
 
         // Increment student absences tracking is handled via events not present count
@@ -150,7 +189,7 @@ class AdminController extends Controller
     public function dashboardData(Request $request)
     {
         $eventId = $request->event_id;
-        $presentCount = $eventId ?AttendanceLog::where('event_id', $eventId)->count() : 0;
+        $presentCount = $eventId ? AttendanceLog::where('event_id', $eventId)->count() : 0;
         $totalStudents = Student::count();
 
         // Dynamic AI Fine Computation
@@ -210,19 +249,20 @@ class AdminController extends Controller
             $response = Http::withoutVerifying()
                 ->withOptions(['timeout' => 30])
                 ->post(
-                "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
-            [
-                'contents' => [[
-                        'parts' => [
-                            ['text' => $prompt],
-                            ['inline_data' => ['mime_type' => $mimeType, 'data' => $imageData]],
-                        ]
-                    ]],
-                'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 2048],
-            ]
-            );
-        }
-        catch (\Exception $e) {
+                    "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
+                    [
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    ['text' => $prompt],
+                                    ['inline_data' => ['mime_type' => $mimeType, 'data' => $imageData]],
+                                ]
+                            ]
+                        ],
+                        'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 2048],
+                    ]
+                );
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Connection to AI failed: ' . $e->getMessage()], 500);
         }
 
@@ -242,5 +282,47 @@ class AdminController extends Controller
         }
 
         return response()->json(['students' => $students]);
+    }
+
+    public function storeBatchStudents(Request $request)
+    {
+        $request->validate([
+            'students' => 'required|array',
+            'students.*.student_id' => 'required|string',
+            'students.*.name' => 'required|string',
+            'students.*.year_and_section' => 'required|string',
+        ]);
+
+        $addedCount = 0;
+        $skipped = [];
+
+        foreach ($request->students as $s) {
+            // Auto-create section if missing
+            $secName = strtoupper(trim($s['year_and_section']));
+            if (!empty($secName)) {
+                YearAndSection::firstOrCreate(['name' => $secName]);
+            }
+
+            $exists = Student::where('student_id', $s['student_id'])->exists();
+            if ($exists) {
+                $skipped[] = $s['student_id'];
+                continue;
+            }
+
+            Student::create([
+                'student_id' => $s['student_id'],
+                'name' => $s['name'],
+                'year_and_section' => $secName,
+                'absences' => 0,
+            ]);
+            $addedCount++;
+        }
+
+        return response()->json([
+            'message' => 'Batch processing complete.',
+            'count' => $addedCount,
+            'skipped_count' => count($skipped),
+            'skipped_ids' => $skipped
+        ]);
     }
 }

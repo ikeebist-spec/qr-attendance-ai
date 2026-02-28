@@ -19,16 +19,26 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $superAdminCount = User::where('role', 'super_admin')->count();
+        $adminCount = User::where('role', 'admin')->count();
+
+        if ($superAdminCount >= 1 && $adminCount >= 4) {
+            return back()->with('error', 'Registration is currently closed (Maximum number of administrators reached).');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
         ]);
 
+        $role = ($superAdminCount === 0) ? 'super_admin' : 'admin';
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $role,
         ]);
 
         // Fire the Registered event — triggers email verification notification
@@ -43,10 +53,6 @@ class AuthController extends Controller
 
     public function showLogin()
     {
-        // If no admin registered yet, redirect to register
-        if (User::count() === 0) {
-            return redirect()->route('register');
-        }
         return view('auth.login');
     }
 
@@ -77,5 +83,57 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+    // ─── Password Reset ────────────────────────────────────────────────────────
+
+    public function showLinkRequestForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    }
+
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('auth.reset-password')->with(
+        ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $status = \Illuminate\Support\Facades\Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+            $user->forceFill([
+                'password' => Hash::make($password)
+            ])->setRememberToken(\Illuminate\Support\Str::random(60));
+
+            $user->save();
+
+            event(new \Illuminate\Auth\Events\PasswordReset($user));
+        }
+        );
+
+        return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
     }
 }

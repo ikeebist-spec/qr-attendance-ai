@@ -1,22 +1,75 @@
 window.html5QrcodeScanner = null;
 
+// ─── Sound Feedback ────────────────────────────────────────────────────────────
+// Use a singleton AudioContext to prevent hitting the browser hardware limit (max 6)
+if (!window.globalAudioCtx) {
+    try {
+        window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+        console.warn("AudioContext not supported", e);
+    }
+}
+
+window.playSuccessSound = function () {
+    try {
+        if (!window.globalAudioCtx) return;
+
+        // Resume context if it was suspended (browser autoplay policy)
+        if (window.globalAudioCtx.state === 'suspended') {
+            window.globalAudioCtx.resume();
+        }
+
+        const oscillator = window.globalAudioCtx.createOscillator();
+        const gainNode = window.globalAudioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, window.globalAudioCtx.currentTime); // 800 Hz
+        oscillator.frequency.exponentialRampToValueAtTime(1200, window.globalAudioCtx.currentTime + 0.1); // Ramp up to 1200 Hz
+
+        gainNode.gain.setValueAtTime(0.5, window.globalAudioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, window.globalAudioCtx.currentTime + 0.15); // Fade out quickly
+
+        oscillator.connect(gainNode);
+        gainNode.connect(window.globalAudioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(window.globalAudioCtx.currentTime + 0.15);
+    } catch (e) {
+        console.warn("Audio playback failed", e);
+    }
+};
+
 // ─── Voice Feedback ──────────────────────────────────────────────────────────
 window.speak = function (text) {
     if (!window.speechSynthesis) return;
-    // Cancel any in-progress speech first
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.1;
-    window.speechSynthesis.speak(utterance);
+    try {
+        window.speechSynthesis.cancel(); // Cancel any in-progress speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.3; // fast feedback
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+    } catch (err) {
+        console.warn("Speech synthesis error", err);
+    }
 };
 
 window.initQRScanner = function () {
     if (!window.Html5QrcodeScanner) return;
     if (!window.html5QrcodeScanner) {
-        window.html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 }, false);
-        window.html5QrcodeScanner.render((decodedText) => window.simulateScan(decodedText), () => { });
+        // fps 15 is extremely fast but stable for low-end device cameras 
+        // formats to limit processing time to standard QR codes
+        window.html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", {
+            fps: 30,
+            qrbox: 300,
+            rememberLastUsedCamera: true,
+            aspectRatio: 1.0
+        }, false);
+
+        window.html5QrcodeScanner.render(
+            (decodedText) => window.simulateScan(decodedText),
+            (error) => { /* ignore normal frame failures */ }
+        );
     }
 };
 
@@ -27,42 +80,119 @@ window.stopQRScanner = function () {
     }
 };
 
+window.recentScans = new Map();
+window.scanQueue = [];
+window.isQueueProcessing = false;
+
+// Background worker to process scans one by one (prevents PHP single-thread server from crashing)
+window.processScanQueue = async function () {
+    if (window.isQueueProcessing || window.scanQueue.length === 0) return;
+    window.isQueueProcessing = true;
+
+    while (window.scanQueue.length > 0) {
+        const scanTask = window.scanQueue.shift();
+        try {
+            const res = await window.apiPost('/api/attendance', scanTask.payload);
+
+            if (res.status === 409) {
+                window.showToast(`${scanTask.student.name} is already logged!`, 'error');
+                // Optional: distinct sound for already logged
+            } else if (res.ok) {
+                // Update UI asynchronously
+                if (window.logActivity) window.logActivity(`Scanned QR: ${scanTask.student.name}`);
+                if (window.renderRecords) window.renderRecords();
+                if (window.renderDashboard) window.renderDashboard();
+            } else {
+                window.showToast(`Failed to log ${scanTask.student.name}.`, 'error');
+                window.recentScans.delete(scanTask.qrCode);
+            }
+        } catch (err) {
+            console.error('Scan API error:', err);
+            window.showToast(`Network error for ${scanTask.student.name}.`, 'error');
+            window.recentScans.delete(scanTask.qrCode);
+        }
+    }
+
+    window.isQueueProcessing = false;
+};
+
 window.simulateScan = async function (decodedText) {
-    const student = window.students.find(s => s.student_id === decodedText.trim());
+    const now = Date.now();
+    const qrCode = decodedText.trim();
+
+    // Prevent double scanning the exact same QR code within 2 seconds (faster turnaround)
+    const lastTime = window.recentScans.get(qrCode) || 0;
+    if (now - lastTime < 2000) {
+        return;
+    }
+
+    // Register this scan immediately
+    window.recentScans.set(qrCode, now);
+
     const currentEvent = window.events.find(e => e.id === window.selectedEventId);
 
     if (!currentEvent) {
         window.showToast('No event selected!', 'error');
+        window.recentScans.delete(qrCode);
         return;
     }
 
+    // ─── Time Window Verification ─────────────────────────────────────────────
+    const nowTime = new Date();
+    const startTime = currentEvent.start_time ? new Date(currentEvent.start_time) : null;
+    const endTime = currentEvent.end_time ? new Date(currentEvent.end_time) : null;
+
+    if (startTime && nowTime < startTime) {
+        window.showToast('Scan failed: Event has not started yet.', 'error');
+        window.recentScans.delete(qrCode);
+        return;
+    }
+
+    if (endTime && nowTime > endTime) {
+        window.showToast("Scan failed: You can't scan because the event is done.", 'error');
+        window.recentScans.delete(qrCode);
+        return;
+    }
+
+    const student = window.students.find(s => String(s.student_id) === qrCode);
+
     if (student) {
-        const res = await window.apiPost('/api/attendance', {
-            student_id: student.student_id,
-            event_id: currentEvent.id,
-            student_name: student.name,
-            section: student.section,
+        // INSTANT visual/audio feedback so the user can quickly move to the next person
+        window.showToast(`THANK YOU! ${student.name}`);
+        window.playSuccessSound();
+        window.speak('THANK YOU!');
+
+        // Capture device time for accuracy
+        const deviceTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Add to background queue to prevent freezing the server
+        window.scanQueue.push({
+            qrCode,
+            student,
+            payload: {
+                student_id: student.student_id,
+                event_id: currentEvent.id,
+                student_name: student.name,
+                year_and_section: student.year_and_section,
+                scanned_at: deviceTime
+            }
         });
 
-        if (res.status === 409) {
-            window.showToast(`${student.name} is already logged for ${currentEvent.name}!`, 'error');
-            window.speak('Already logged.');
-        } else if (res.ok) {
-            window.showToast(`Success! Logged attendance for ${student.name}.`);
-            window.speak('Thank you.');
-            if (window.logActivity) window.logActivity(`Scanned QR for ${student.name} (${currentEvent.name})`);
-            if (window.renderRecords) window.renderRecords();
-            if (window.renderDashboard) window.renderDashboard();
-        } else {
-            window.showToast('Failed to log attendance.', 'error');
-            window.speak('Scan failed. Please try again.');
-        }
-    } else {
-        window.showToast('Invalid QR Code: Not found in database.', 'error');
-        window.speak('Student not found.');
-    }
+        // Trigger queue processor
+        window.processScanQueue();
 
-    if (window.html5QrcodeScanner) {
-        try { window.html5QrcodeScanner.pause(); setTimeout(() => window.html5QrcodeScanner.resume(), 2500); } catch (e) { }
+    } else {
+        window.showToast('Invalid QR: Not found in database.', 'error');
+        window.recentScans.set(qrCode, now - 2000);
     }
 };
+
+// Map cleanup to prevent memory bloat
+setInterval(() => {
+    const timeNow = Date.now();
+    for (const [qr, timestamp] of window.recentScans.entries()) {
+        if (timeNow - timestamp > 5000) {
+            window.recentScans.delete(qr);
+        }
+    }
+}, 10000);

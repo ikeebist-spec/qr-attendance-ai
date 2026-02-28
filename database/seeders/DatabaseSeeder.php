@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Section;
+use App\Models\YearAndSection;
 use App\Models\Event;
 use Illuminate\Database\Seeder;
 
@@ -10,11 +10,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Seed default sections
-        $sections = ['1A', '1B', '1C', '1D', '1E', '1F', '1G', '2A', '2B', '2C', '2D', '2E', '3A', '3B', '3C', '3D', '4A', '4B', '4C'];
-        foreach ($sections as $name) {
-            Section::firstOrCreate(['name' => $name]);
-        }
+        // No default sections seeded, user manages them manually
 
         // Seed default events
         $events = [
