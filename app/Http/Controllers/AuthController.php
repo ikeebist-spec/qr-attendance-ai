@@ -36,19 +36,17 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // Explicit check for column existence before attempting login
+        // This prevents the 500 error on the Auth::attempt call itself
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'username')) {
+            return redirect('/init-roles');
+        }
+
         $credentials = $request->only('username', 'password');
 
-        try {
-            if (Auth::attempt($credentials, $request->boolean('remember'))) {
-                $request->session()->regenerate();
-                return redirect()->intended('/');
-            }
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Self-healing: If column is missing, redirect to init-roles
-            if (str_contains($e->getMessage(), 'Unknown column \'username\'')) {
-                return redirect('/init-roles')->with('error', 'The system needs a quick initialization. Please wait...');
-            }
-            throw $e;
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended('/');
         }
 
         return back()->withErrors([

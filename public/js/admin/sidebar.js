@@ -15,8 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth < 768) {
             // Mobile: Toggle off-canvas
             sidebar.classList.toggle('sidebar-open');
-            sidebarOverlay.classList.toggle('show');
-            sidebarOverlay.classList.toggle('hidden');
+            if (sidebar.classList.contains('sidebar-open')) {
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.add('show'), 10);
+            } else {
+                closeSidebar();
+            }
         } else {
             // Desktop: Toggle collapsed width
             body.classList.toggle('sidebar-collapsed');
@@ -24,20 +28,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const closeSidebar = () => {
+    window.closeSidebar = () => {
         sidebar.classList.remove('sidebar-open');
         sidebarOverlay.classList.remove('show');
-        sidebarOverlay.classList.add('hidden');
+        setTimeout(() => {
+            if (!sidebarOverlay.classList.contains('show')) {
+                sidebarOverlay.classList.add('hidden');
+            }
+        }, 300);
     };
 
     sidebarToggle?.addEventListener('click', toggleSidebar);
-    sidebarClose?.addEventListener('click', closeSidebar);
-    sidebarOverlay?.addEventListener('click', closeSidebar);
+    sidebarClose?.addEventListener('click', window.closeSidebar);
+    sidebarOverlay?.addEventListener('click', window.closeSidebar);
 
     // Close mobile sidebar on window resize if it's over the breakpoint
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 768) {
-            closeSidebar();
+            window.closeSidebar();
         }
     });
 

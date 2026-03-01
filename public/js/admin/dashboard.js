@@ -125,7 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sidebar tab switching
     document.querySelectorAll('.sidebar-btn').forEach(btn => {
-        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
+        btn.addEventListener('click', () => {
+            window.switchTab(btn.dataset.tab);
+            if (window.innerWidth < 768 && window.closeSidebar) {
+                window.closeSidebar();
+            }
+        });
     });
 });
 
