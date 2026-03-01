@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-800 overflow-hidden h-screen flex flex-col">
+<body class="bg-gray-50 font-sans text-gray-800 overflow-hidden h-[100dvh] flex flex-col">
 
     <!-- TOAST CONTAINER -->
     <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3"></div>

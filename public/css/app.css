@@ -16,11 +16,11 @@
 }
 
 .tab-content {
-    display: none;
+    display: none !important;
 }
 
 .tab-content.active {
-    display: block;
+    display: block !important;
     animation: fadeIn 0.3s ease-out;
 }
 

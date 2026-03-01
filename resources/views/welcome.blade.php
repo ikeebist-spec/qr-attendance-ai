@@ -4,7 +4,7 @@
     {{-- The login view is replaced by real Laravel auth at /login --}}
     {{-- The user is already authenticated + verified to reach here --}}
 
-    <div id="main-view" class="flex h-screen w-full relative overflow-hidden">
+    <div id="main-view" class="flex h-[100dvh] w-full relative overflow-hidden">
         <!-- Sidebar Mobile Overlay -->
         <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-30 transition-opacity"></div>
 
@@ -50,7 +50,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-8 relative">
+            <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
                 @include('admin.dashboard')
                 @include('admin.eventManagement')
                 @include('admin.scanQrCode')
