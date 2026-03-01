@@ -224,10 +224,10 @@
                 @csrf
 
                 <div class="relative input-group">
-                    <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus
-                        class="glass-input w-full rounded-2xl text-sm" placeholder="Email Address">
-                    <label for="email"
-                        class="absolute -top-2.5 left-5 bg-[#140824] px-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/80 rounded-md border border-violet-500/20">Email</label>
+                    <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
+                        class="glass-input w-full rounded-2xl text-sm" placeholder="Username">
+                    <label for="username"
+                        class="absolute -top-2.5 left-5 bg-[#140824] px-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/80 rounded-md border border-violet-500/20">Username</label>
                 </div>
 
                 <div class="relative input-group mt-8">
@@ -237,24 +237,14 @@
                         class="absolute -top-2.5 left-5 bg-[#140824] px-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/80 rounded-md border border-violet-500/20">Password</label>
                 </div>
 
-                <div class="flex justify-end pr-2">
-                    <a href="{{ route('password.request') }}"
-                        class="text-[10px] font-bold uppercase tracking-widest text-violet-400/60 hover:text-violet-300 transition-colors">Forgot
-                        Password?</a>
-                </div>
+                {{-- Login links disabled --}}
 
                 <button type="submit"
                     class="btn-premium w-full text-white font-black py-4 rounded-2xl text-xs tracking-[0.25em] uppercase mt-6 shadow-2xl">
                     Sign In
                 </button>
 
-                <div class="text-center mt-10">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400/40">
-                        New here? <a href="{{ route('register') }}"
-                            class="text-violet-300 hover:text-white transition-all duration-300 underline decoration-violet-500/40 underline-offset-8">Create
-                            Account</a>
-                    </p>
-                </div>
+                {{-- Registration link disabled --}}
             </form>
         </div>
 

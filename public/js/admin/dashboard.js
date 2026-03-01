@@ -100,7 +100,7 @@ async function bootstrapApp() {
     window.yearAndSections = await yearAndSectionsRes.json();
     window.activityLogs = await logsRes.json();
 
-    if (window.events.length > 0)
+    if (window.events && window.events.length > 0)
         window.selectedEventId = window.events[window.events.length - 1].id;
 
     // Render all modules

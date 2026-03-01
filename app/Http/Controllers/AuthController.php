@@ -14,39 +14,12 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        return abort(404);
     }
 
     public function register(Request $request)
     {
-        $superAdminCount = User::where('role', 'super_admin')->count();
-        $adminCount = User::where('role', 'admin')->count();
-
-        if ($superAdminCount >= 1 && $adminCount >= 4) {
-            return back()->with('error', 'Registration is currently closed (Maximum number of administrators reached).');
-        }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        $role = ($superAdminCount === 0) ? 'super_admin' : 'admin';
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $role,
-        ]);
-
-        // Fire the Registered event — triggers email verification notification
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect()->route('verification.notice');
+        return abort(404);
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -59,11 +32,11 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'username' => 'required',
             'password' => 'required',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->only('username', 'password');
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
@@ -71,8 +44,8 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'These credentials do not match our records.',
-        ])->onlyInput('email');
+            'username' => 'These credentials do not match our records.',
+        ])->onlyInput('username');
     }
 
     // ─── Logout ───────────────────────────────────────────────────────────────
@@ -107,7 +80,7 @@ class AuthController extends Controller
     public function showResetForm(Request $request, $token = null)
     {
         return view('auth.reset-password')->with(
-        ['token' => $token, 'email' => $request->email]
+            ['token' => $token, 'email' => $request->email]
         );
     }
 
@@ -122,14 +95,14 @@ class AuthController extends Controller
         $status = \Illuminate\Support\Facades\Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
-            $user->forceFill([
-                'password' => Hash::make($password)
-            ])->setRememberToken(\Illuminate\Support\Str::random(60));
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(\Illuminate\Support\Str::random(60));
 
-            $user->save();
+                $user->save();
 
-            event(new \Illuminate\Auth\Events\PasswordReset($user));
-        }
+                event(new \Illuminate\Auth\Events\PasswordReset($user));
+            }
         );
 
         return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET

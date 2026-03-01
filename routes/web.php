@@ -10,36 +10,12 @@ use App\Http\Middleware\EnsureOnlyOneAdmin;
 
 // ─── Auth Routes ─────────────────────────────────────────────────────────────
 
-// Register
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-
-// Login / Logout
+// Registration & Verification Disabled for built-in admin account.
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Email Verification
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
-
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return redirect('/');
-})->middleware(['auth', 'signed'])->name('verification.verify');
-
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return back()->with('message', 'A new verification link has been sent to your email!');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
-
-// ─── Password Reset Routes ───────────────────────────────────────────────────
-
-Route::get('/forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
-Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
+// ─── Password Reset Routes (Disabled) ──────────────────────────────────────────
 
 // ─── Setup & Roles Init Route ────────────────────────────────────────────────
 Route::get('/init-roles', function () {
@@ -61,7 +37,7 @@ Route::get('/init-roles', function () {
 
 // ─── Protected Dashboard ─────────────────────────────────────────────────────
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get(
         '/',
         function () {
@@ -72,7 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // ─── JSON API Routes (also protected) ────────────────────────────────────────
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Students
     Route::get('/api/students', [AdminController::class, 'students']);
     Route::post('/api/students', [AdminController::class, 'storeStudent']);

@@ -139,17 +139,27 @@ window.simulateScan = async function (decodedText) {
 
     // ─── Time Window Verification ─────────────────────────────────────────────
     const nowTime = new Date();
-    const startTime = currentEvent.start_time ? new Date(currentEvent.start_time) : null;
-    const endTime = currentEvent.end_time ? new Date(currentEvent.end_time) : null;
+
+    // Helper to parse "YYYY-MM-DD HH:mm:ss" strings from server (Asia/Manila)
+    const parseServerDate = (dateStr) => {
+        if (!dateStr) return null;
+        // If it's already an ISO string or has timezone, new Date() works.
+        // If it's a "YYYY-MM-DD HH:mm:ss" string, we assume it's Asia/Manila.
+        if (dateStr.includes('T') || dateStr.includes('Z')) return new Date(dateStr);
+        return new Date(dateStr.replace(' ', 'T') + '+08:00');
+    };
+
+    const startTime = parseServerDate(currentEvent.start_time);
+    const endTime = parseServerDate(currentEvent.end_time);
 
     if (startTime && nowTime < startTime) {
-        window.showToast('Scan failed: Event has not started yet.', 'error');
+        window.showToast(`Not started. Please wait until ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`, 'error');
         window.recentScans.delete(qrCode);
         return;
     }
 
     if (endTime && nowTime > endTime) {
-        window.showToast("Scan failed: You can't scan because the event is done.", 'error');
+        window.showToast(`Scan failed: Attendance closed at ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`, 'error');
         window.recentScans.delete(qrCode);
         return;
     }
