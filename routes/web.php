@@ -17,23 +17,28 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ─── Password Reset Routes (Disabled) ──────────────────────────────────────────
 
-// ─── Setup & Roles Init Route ────────────────────────────────────────────────
+// ─── Setup & Roles Init Route (Emergency DB Fix) ──────────────────────────────
 Route::get('/init-roles', function () {
     try {
+        echo "Starting initialization...<br>";
+
+        // 1. Ensure 'role' column exists
         if (!Schema::hasColumn('users', 'role')) {
             Schema::table('users', function ($table) {
                 $table->string('role')->default('admin');
             });
+            echo "Added 'role' column.<br>";
         }
 
-        // Also ensure username column exists for our new login system
+        // 2. Ensure 'username' column exists
         if (!Schema::hasColumn('users', 'username')) {
             Schema::table('users', function ($table) {
                 $table->string('username')->unique()->nullable()->after('name');
             });
+            echo "Added 'username' column.<br>";
         }
 
-        // Auto-seed the admin if not exists
+        // 3. Create/Update the Admin User
         \App\Models\User::updateOrCreate(
             ['username' => 'CCS-FCO OFFICER'],
             [
@@ -43,10 +48,19 @@ Route::get('/init-roles', function () {
                 'role' => 'super_admin',
             ]
         );
+        echo "Admin account created/updated.<br>";
 
-        return 'System initialized successfully. You can now login.';
+        // 4. Try running migrations just in case
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            echo "Artisan migrate executed.<br>";
+        } catch (\Exception $e) {
+            echo "Note: Artisan migrate failed (likely already up to date): " . $e->getMessage() . "<br>";
+        }
+
+        return "<br><b>SUCCESS: System initialized. Please go to <a href='/login'>/login</a> and use the new credentials.</b>";
     } catch (\Exception $e) {
-        return 'Error during initialization: ' . $e->getMessage();
+        return "<br><b>ERROR:</b> " . $e->getMessage();
     }
 });
 
