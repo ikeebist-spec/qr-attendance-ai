@@ -21,16 +21,32 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/init-roles', function () {
     try {
         if (!Schema::hasColumn('users', 'role')) {
-            Schema::table(
-                'users',
-                function ($table) {
-                    $table->string('role')->default('admin');
-                }
-            );
+            Schema::table('users', function ($table) {
+                $table->string('role')->default('admin');
+            });
         }
-        return 'Roles initialized.';
+
+        // Also ensure username column exists for our new login system
+        if (!Schema::hasColumn('users', 'username')) {
+            Schema::table('users', function ($table) {
+                $table->string('username')->unique()->nullable()->after('name');
+            });
+        }
+
+        // Auto-seed the admin if not exists
+        \App\Models\User::updateOrCreate(
+            ['username' => 'CCS-FCO OFFICER'],
+            [
+                'name' => 'CCS-FCO OFFICER',
+                'email' => 'admin@ccs.essu.edu.ph',
+                'password' => \Illuminate\Support\Facades\Hash::make('ccsattendanceqr-2026'),
+                'role' => 'super_admin',
+            ]
+        );
+
+        return 'System initialized successfully. You can now login.';
     } catch (\Exception $e) {
-        return 'Error: ' . $e->getMessage();
+        return 'Error during initialization: ' . $e->getMessage();
     }
 });
 
