@@ -38,9 +38,17 @@ class AuthController extends Controller
 
         $credentials = $request->only('username', 'password');
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended('/');
+        try {
+            if (Auth::attempt($credentials, $request->boolean('remember'))) {
+                $request->session()->regenerate();
+                return redirect()->intended('/');
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Self-healing: If column is missing, redirect to init-roles
+            if (str_contains($e->getMessage(), 'Unknown column \'username\'')) {
+                return redirect('/init-roles')->with('error', 'The system needs a quick initialization. Please wait...');
+            }
+            throw $e;
         }
 
         return back()->withErrors([
