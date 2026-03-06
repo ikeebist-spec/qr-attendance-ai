@@ -113,6 +113,14 @@ class AdminController extends Controller implements HasMiddleware
         return response()->json($event, 201);
     }
 
+    public function deleteEvent($id)
+    {
+        $event = Event::findOrFail($id);
+        AttendanceLog::where('event_id', $id)->delete();
+        $event->delete();
+        return response()->json(['success' => true]);
+    }
+
     // ─── YEAR AND SECTIONS ─────────────────────────────────────────────────────────────
 
     public function yearAndSections()

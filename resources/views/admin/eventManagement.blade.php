@@ -64,6 +64,7 @@
                     <th class="px-6 py-4 font-medium">Scanning Window</th>
                     <th class="px-6 py-4 font-medium">Fine</th>
                     <th class="px-6 py-4 font-medium">Type</th>
+                    <th class="px-6 py-4 font-medium text-center">Action</th>
                 </tr>
             </thead>
             <tbody id="events-table-body">

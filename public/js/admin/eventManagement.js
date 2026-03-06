@@ -23,9 +23,41 @@ window.renderEvents = function () {
                 <td class="px-6 py-3">
                     <span class="px-2 py-1 rounded text-xs font-bold ${ev.type === 'Mandatory' ? 'bg-red-100 text-red-700' : ev.type === 'Major' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}">${window.escapeHTML(ev.type)}</span>
                 </td>
+                <td class="px-6 py-3 text-center">
+                    <button onclick="window.deleteEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Delete Event">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
+};
+
+window.deleteEvent = async function (id) {
+    if (!confirm('Are you sure you want to delete this event? This will also delete any attendance records associated with it and affect fine computations!')) return;
+
+    try {
+        const res = await window.apiDelete(`/api/events/${id}`);
+        if (res.ok) {
+            window.events = window.events.filter(e => e.id !== id);
+            if (window.selectedEventId === id) {
+                window.selectedEventId = window.events.length > 0 ? window.events[window.events.length - 1].id : null;
+            }
+            window.showToast('Event deleted successfully');
+            if (window.logActivity) window.logActivity(`Deleted event ID: ${id}`);
+            window.renderEvents();
+            window.renderEventSelector();
+            if (window.renderDashboard) window.renderDashboard();
+            if (window.renderRecords) window.renderRecords();
+            if (window.renderFines) window.renderFines();
+        } else {
+            const data = await res.json();
+            window.showToast(data.error || 'Failed to delete event', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        window.showToast('Error connecting to the server', 'error');
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {

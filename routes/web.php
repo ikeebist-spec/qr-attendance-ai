@@ -87,6 +87,7 @@ Route::middleware(['auth'])->group(function () {
     // Events
     Route::get('/api/events', [AdminController::class, 'events']);
     Route::post('/api/events', [AdminController::class, 'storeEvent']);
+    Route::delete('/api/events/{id}', [AdminController::class, 'deleteEvent']);
 
     // Year And Sections
     Route::get('/api/year-and-sections', [AdminController::class, 'yearAndSections']);
