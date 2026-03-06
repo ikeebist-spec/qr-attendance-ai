@@ -389,7 +389,7 @@ If the user asks about specific numbers (like 'how many students' or 'how many e
             $response = Http::withoutVerifying()
                 ->withOptions(['timeout' => 30])
                 ->post(
-                    "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}",
                     [
                         'contents' => [
                             [
@@ -403,8 +403,13 @@ If the user asks about specific numbers (like 'how many students' or 'how many e
             return response()->json(['reply' => 'Connection to AI failed. Please try again later.']);
         }
 
+        if ($response->status() === 429) {
+            return response()->json(['reply' => 'The AI is currently processing too many requests. Please wait a minute and try again.']);
+        }
+
         if (!$response->ok()) {
-            return response()->json(['reply' => 'I encountered an error understanding your request.']);
+            \Illuminate\Support\Facades\Log::error('Gemini API Error: ' . $response->body());
+            return response()->json(['reply' => 'I encountered an error understanding your request. Details: ' . rtrim(substr($response->body(), 0, 100)) . '...']);
         }
 
         $text = $response->json('candidates.0.content.parts.0.text') ?? 'I am sorry, I am unable to process that right now.';
