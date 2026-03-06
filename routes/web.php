@@ -107,4 +107,7 @@ Route::middleware(['auth'])->group(function () {
     // AI Masterlist Photo Scanner
     Route::post('/api/masterlist/scan', [AdminController::class, 'scanMasterlistPhoto']);
     Route::post('/api/students/batch', [AdminController::class, 'storeBatchStudents']);
+
+    // AI Chatbot
+    Route::post('/api/chatbot', [AdminController::class, 'askChatbot']);
 });

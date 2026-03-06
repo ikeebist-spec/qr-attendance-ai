@@ -27,18 +27,11 @@ window.runAIAnalysis = async function () {
         }
     } catch (e) { }
 
-    // 2. Estimate individual student fines directly based on attendance
-    // (A perfectly accurate student fine requires a joining query, but for the UI snapshot, we use the average event fine)
-    const avgFine = window.events && window.events.length
-        ? window.events.reduce((sum, ev) => sum + (ev.fine || 50), 0) / window.events.length
-        : 50;
-
     const yearAndSectionAbsences = {};
     const riskList = [];
 
     window.students.forEach(s => {
-        let fine = 0;
-        if (s.absences > 0) fine = s.absences * avgFine;
+        let fine = s.fine || 0;
 
         if (!yearAndSectionAbsences[s.year_and_section]) yearAndSectionAbsences[s.year_and_section] = { total: 0, count: 0 };
         yearAndSectionAbsences[s.year_and_section].total += s.absences;
@@ -156,35 +149,34 @@ document.addEventListener('DOMContentLoaded', () => {
         input.value = '';
         document.getElementById('chat-send').disabled = true;
         window.renderChatMessages();
-        setTimeout(() => {
-            const l = userMsg.toLowerCase();
-            let reply = "I'm still learning! Ask me about students, QR scanning, fine computation, or events.";
+        // Dynamic data integration context
+        const contextStr = JSON.stringify({
+            total_fines_accumulated: window.insights ? window.insights.totalFines : 0,
+            students_at_risk_count: window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0,
+            total_recorded_events_count: window.events ? window.events.length : 0,
+            total_students_masterlist_count: window.students ? window.students.length : 0,
+            at_risk_sections: window.insights && window.insights.atRiskYearAndSections ? window.insights.atRiskYearAndSections : 'None'
+        });
 
-            // Dynamic data integration into chatbot
-            const tFines = window.insights ? window.insights.totalFines.toFixed(2) : 0;
-            const tRisk = window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0;
-            const tEvents = window.events ? window.events.length : 0;
-            const tStudents = window.students ? window.students.length : 0;
+        const replyRef = { sender: 'bot', text: 'Typing...' };
+        window.chatMessages.push(replyRef);
+        window.renderChatMessages();
 
-            if (l.includes('fine') || l.includes('compute') || l.includes('how much') || l.includes('total fine')) {
-                reply = `The total accumulated fines for all students is currently ₱${tFines}. Fines are dynamically computed based on event absence records multiplied by the average event fine.`;
-            } else if (l.includes('student') || l.includes('add') || l.includes('qr') || l.includes('masterlist')) {
-                reply = `We currently have ${tStudents} students registered in the Student Masterlist. Each student has a unique QR code for attendance!`;
-            } else if (l.includes('event') || l.includes('how many event')) {
-                reply = `There are currently ${tEvents} events recorded in the system. Make sure you select the correct event before scanning!`;
-            } else if (l.includes('hello') || l.includes('hi')) {
-                reply = "Hello Officer! How can I assist you with the attendance system today?";
-            } else if (l.includes('ai') || l.includes('risk') || l.includes('warn') || l.includes('absent')) {
-                const tr = window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0;
-                reply = `According to my analysis, there are ${tr} students at high risk (2+ absences). I've highlighted them in the AI Analytics dashboard.`;
-            } else if (l.includes('section')) {
-                const trSection = window.insights && window.insights.atRiskYearAndSections && window.insights.atRiskYearAndSections.length > 0
-                    ? window.insights.atRiskYearAndSections[0].year_and_section : 'None currently';
-                reply = `The highest risk Year and Section based on absenteeism right now is ${trSection}.`;
+        (async () => {
+            try {
+                const res = await fetch('/api/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                    body: JSON.stringify({ message: userMsg, context: contextStr })
+                });
+                const d = await res.json();
+                replyRef.text = d.reply || 'I could not retrieve an answer at this time.';
+            } catch (e) {
+                console.error(e);
+                replyRef.text = 'There was a connection issue contacting the AI engine.';
             }
-
-            window.chatMessages.push({ sender: 'bot', text: reply });
             window.renderChatMessages();
-        }, 600);
+            document.getElementById('chat-input').focus();
+        })();
     });
 });

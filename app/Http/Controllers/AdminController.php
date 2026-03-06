@@ -34,14 +34,20 @@ class AdminController extends Controller implements HasMiddleware
     {
         $students = Student::orderBy('created_at', 'desc')->get();
         $totalEvents = Event::count();
+        $totalEventFines = Event::sum('fine');
 
-        $attendanceCounts = AttendanceLog::select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
-            ->groupBy('student_id')
-            ->pluck('present_count', 'student_id');
+        $attendanceCounts = AttendanceLog::join('events', 'attendance_logs.event_id', '=', 'events.id')
+            ->select('attendance_logs.student_id', \Illuminate\Support\Facades\DB::raw('sum(events.fine) as attended_fine'), \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
+            ->groupBy('attendance_logs.student_id')
+            ->get()
+            ->keyBy('student_id');
 
         foreach ($students as $student) {
-            $present = $attendanceCounts[$student->student_id] ?? 0;
+            $present = $attendanceCounts[$student->student_id]->present_count ?? 0;
+            $attendedFine = $attendanceCounts[$student->student_id]->attended_fine ?? 0;
+
             $student->absences = max(0, $totalEvents - $present);
+            $student->fine = max(0, $totalEventFines - $attendedFine);
         }
 
         return response()->json($students);
@@ -211,19 +217,23 @@ class AdminController extends Controller implements HasMiddleware
         $atRisk = 0;
 
         if ($totalEvents > 0) {
-            $events = Event::all();
-            $averageFine = $events->avg('fine') ?? 50;
+            $totalEventFines = Event::sum('fine');
 
-            $attendanceCounts = AttendanceLog::select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
-                ->groupBy('student_id')
-                ->pluck('present_count', 'student_id');
+            $attendanceCounts = AttendanceLog::join('events', 'attendance_logs.event_id', '=', 'events.id')
+                ->select('attendance_logs.student_id', \Illuminate\Support\Facades\DB::raw('sum(events.fine) as attended_fine'), \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
+                ->groupBy('attendance_logs.student_id')
+                ->get()
+                ->keyBy('student_id');
 
             foreach ($students as $s) {
-                $present = $attendanceCounts[$s->student_id] ?? 0;
-                $s->absences = max(0, $totalEvents - $present);
+                $present = $attendanceCounts[$s->student_id]->present_count ?? 0;
+                $attendedFine = $attendanceCounts[$s->student_id]->attended_fine ?? 0;
 
-                if ($s->absences > 0) {
-                    $totalFines += ($s->absences * $averageFine);
+                $s->absences = max(0, $totalEvents - $present);
+                $exactFine = max(0, $totalEventFines - $attendedFine);
+
+                if ($exactFine > 0) {
+                    $totalFines += $exactFine;
                 }
                 if ($s->absences >= 2) {
                     $atRisk++;
@@ -337,5 +347,41 @@ class AdminController extends Controller implements HasMiddleware
             'skipped_count' => count($skipped),
             'skipped_ids' => $skipped
         ]);
+    }
+
+    // ─── CHATBOT AI SUPPORT ──────────────────────────────────────────────────
+
+    public function askChatbot(Request $request)
+    {
+        $request->validate(['message' => 'required|string', 'context' => 'required|string']);
+
+        $apiKey = env('GEMINI_API_KEY');
+        $prompt = "You are the AI Assistant for the ESSU CCS Attendance System. Answer the user's question concisely based on the following Context Data.\n\nContext Data:\n{$request->context}\n\nUser Question: {$request->message}\n\nAnswer concisely and helpfully:";
+
+        try {
+            $response = Http::withoutVerifying()
+                ->withOptions(['timeout' => 30])
+                ->post(
+                    "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
+                    [
+                        'contents' => [
+                            [
+                                'parts' => [['text' => $prompt]]
+                            ]
+                        ],
+                        'generationConfig' => ['temperature' => 0.2, 'maxOutputTokens' => 500],
+                    ]
+                );
+        } catch (\Exception $e) {
+            return response()->json(['reply' => 'Connection to AI failed. Please try again later.']);
+        }
+
+        if (!$response->ok()) {
+            return response()->json(['reply' => 'I encountered an error understanding your request.']);
+        }
+
+        $text = $response->json('candidates.0.content.parts.0.text') ?? 'I am sorry, I am unable to process that right now.';
+
+        return response()->json(['reply' => $text]);
     }
 }

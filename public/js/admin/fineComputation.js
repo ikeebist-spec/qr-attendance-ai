@@ -30,7 +30,7 @@ window.renderFines = function () {
 
         let sectionTotalFines = 0;
         students.forEach(s => {
-            if (s.absences > 0) sectionTotalFines += (s.absences * avgFine);
+            sectionTotalFines += (s.fine || 0);
         });
 
         // Folder Header Row
@@ -49,10 +49,7 @@ window.renderFines = function () {
 
         // Student Rows
         students.forEach(student => {
-            let fine = 0;
-            if (student.absences > 0) {
-                fine = student.absences * avgFine;
-            }
+            let fine = student.fine || 0;
 
             // Calculate present
             const totalEvents = window.events ? window.events.length : 0;
