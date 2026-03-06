@@ -75,9 +75,9 @@ window.switchTab = function (tabId) {
 
 // ─── Dashboard Render ────────────────────────────────────────────────────────
 window.renderDashboard = async function () {
-    if (!window.selectedEventId) return;
     try {
-        const res = await fetch(`/api/dashboard?event_id=${window.selectedEventId}`);
+        const eventParam = window.selectedEventId ? `?event_id=${window.selectedEventId}` : '';
+        const res = await fetch(`/api/dashboard${eventParam}`);
         const data = await res.json();
         document.getElementById('dash-present').innerText = data.present;
         document.getElementById('dash-total').innerText = data.total_students;
