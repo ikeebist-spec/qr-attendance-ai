@@ -363,8 +363,27 @@ class AdminController extends Controller implements HasMiddleware
     {
         $request->validate(['message' => 'required|string', 'context' => 'required|string']);
 
+        $totalStudents = Student::count();
+        $totalEventsCount = Event::count();
+        $totalSystemFines = $request->context_fines ?? 0; // passed from frontend context
+
+        $eventsList = Event::select('name', 'date', 'type', 'fine')->get()->map(function ($ev) {
+            return "{$ev->name} ({$ev->date}, {$ev->type}, Fine: ₱{$ev->fine})";
+        })->implode('; ');
+
         $apiKey = env('GEMINI_API_KEY');
-        $prompt = "You are the AI Assistant for the ESSU CCS Attendance System. Answer the user's question concisely based on the following Context Data.\n\nContext Data:\n{$request->context}\n\nUser Question: {$request->message}\n\nAnswer concisely and helpfully:";
+        $prompt = "You are the AI Assistant for the ESSU CCS Attendance System. Answer the user's question concisely, perfectly, and accurately based ONLY on the following System Data.
+
+--- SYSTEM DATA ---
+Frontend Summary Context: {$request->context}
+Total Students in Masterlist: {$totalStudents}
+Total Events Recorded: {$totalEventsCount}
+Detailed Event List: {$eventsList}
+-------------------
+
+User Question: {$request->message}
+
+If the user asks about specific numbers (like 'how many students' or 'how many events'), use the exact numbers provided in the System Data above. Start your answer directly, be helpful and professional:";
 
         try {
             $response = Http::withoutVerifying()

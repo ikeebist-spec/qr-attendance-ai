@@ -155,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             students_at_risk_count: window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0,
             total_recorded_events_count: window.events ? window.events.length : 0,
             total_students_masterlist_count: window.students ? window.students.length : 0,
-            at_risk_sections: window.insights && window.insights.atRiskYearAndSections ? window.insights.atRiskYearAndSections : 'None'
+            at_risk_sections: window.insights && window.insights.atRiskYearAndSections ? window.insights.atRiskYearAndSections : 'None',
+            student_names_preview: window.students ? window.students.map(s => s.name).slice(0, 50).join(', ') + (window.students.length > 50 ? '...and more' : '') : ''
         });
 
         const replyRef = { sender: 'bot', text: 'Typing...' };
