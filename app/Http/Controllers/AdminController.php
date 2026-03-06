@@ -32,7 +32,19 @@ class AdminController extends Controller implements HasMiddleware
 
     public function students()
     {
-        return response()->json(Student::orderBy('created_at', 'desc')->get());
+        $students = Student::orderBy('created_at', 'desc')->get();
+        $totalEvents = Event::count();
+
+        $attendanceCounts = AttendanceLog::select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
+            ->groupBy('student_id')
+            ->pluck('present_count', 'student_id');
+
+        foreach ($students as $student) {
+            $present = $attendanceCounts[$student->student_id] ?? 0;
+            $student->absences = max(0, $totalEvents - $present);
+        }
+
+        return response()->json($students);
     }
 
     public function storeStudent(Request $request)
@@ -198,17 +210,18 @@ class AdminController extends Controller implements HasMiddleware
         $totalFines = 0;
         $atRisk = 0;
 
-        // If there are no events, no one owes fines
         if ($totalEvents > 0) {
             $events = Event::all();
-
-            // To be perfectly accurate, we need to know exactly which events each student missed.
-            // Since `absences` on the Student model is just a counter of HOW MANY they missed,
-            // we will estimate the fine by multiplying their absence count by the average event fine.
-            // (For exact mapping, the AI Analytics frontend does a deeper dive).
             $averageFine = $events->avg('fine') ?? 50;
 
+            $attendanceCounts = AttendanceLog::select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
+                ->groupBy('student_id')
+                ->pluck('present_count', 'student_id');
+
             foreach ($students as $s) {
+                $present = $attendanceCounts[$s->student_id] ?? 0;
+                $s->absences = max(0, $totalEvents - $present);
+
                 if ($s->absences > 0) {
                     $totalFines += ($s->absences * $averageFine);
                 }

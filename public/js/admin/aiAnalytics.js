@@ -77,7 +77,7 @@ window.runAIAnalysis = async function () {
         </div>`).join('');
 
     // Chart.js implementation for Section Risk
-    const ctx = document.getElementById('section-risk-chart');
+    const ctx = document.getElementById('year-and-section-risk-chart');
     if (ctx) {
         // Destroy existing chart if it exists to prevent overlap when re-running analysis
         if (window.sectionChartInstance) {
@@ -159,11 +159,30 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             const l = userMsg.toLowerCase();
             let reply = "I'm still learning! Ask me about students, QR scanning, fine computation, or events.";
-            if (l.includes('fine') || l.includes('compute')) reply = "The AI computes escalating fines: 1st absence = ₱50, 2nd = ₱150, 3+ = ₱350.";
-            else if (l.includes('student') || l.includes('add') || l.includes('qr')) reply = "Add students in the 'Student Masterlist' tab. The system generates a unique QR code for each!";
-            else if (l.includes('event') || l.includes('alay')) reply = "Manage events in the 'Events Management' tab. Select the correct event before scanning!";
-            else if (l.includes('hello') || l.includes('hi')) reply = "Hello Officer! How can I assist you with the attendance system?";
-            else if (l.includes('ai') || l.includes('risk')) reply = "The AI Engine analyzes attendance patterns and identifies high-risk students and sections. Check the 'AI Analytics' tab!";
+
+            // Dynamic data integration into chatbot
+            const tFines = window.insights ? window.insights.totalFines.toFixed(2) : 0;
+            const tRisk = window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0;
+            const tEvents = window.events ? window.events.length : 0;
+            const tStudents = window.students ? window.students.length : 0;
+
+            if (l.includes('fine') || l.includes('compute') || l.includes('how much') || l.includes('total fine')) {
+                reply = `The total accumulated fines for all students is currently ₱${tFines}. Fines are dynamically computed based on event absence records multiplied by the average event fine.`;
+            } else if (l.includes('student') || l.includes('add') || l.includes('qr') || l.includes('masterlist')) {
+                reply = `We currently have ${tStudents} students registered in the Student Masterlist. Each student has a unique QR code for attendance!`;
+            } else if (l.includes('event') || l.includes('how many event')) {
+                reply = `There are currently ${tEvents} events recorded in the system. Make sure you select the correct event before scanning!`;
+            } else if (l.includes('hello') || l.includes('hi')) {
+                reply = "Hello Officer! How can I assist you with the attendance system today?";
+            } else if (l.includes('ai') || l.includes('risk') || l.includes('warn') || l.includes('absent')) {
+                const tr = window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0;
+                reply = `According to my analysis, there are ${tr} students at high risk (2+ absences). I've highlighted them in the AI Analytics dashboard.`;
+            } else if (l.includes('section')) {
+                const trSection = window.insights && window.insights.atRiskYearAndSections && window.insights.atRiskYearAndSections.length > 0
+                    ? window.insights.atRiskYearAndSections[0].year_and_section : 'None currently';
+                reply = `The highest risk Year and Section based on absenteeism right now is ${trSection}.`;
+            }
+
             window.chatMessages.push({ sender: 'bot', text: reply });
             window.renderChatMessages();
         }, 600);
