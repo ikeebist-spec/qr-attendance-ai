@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('close-chat')?.addEventListener('click', () => document.getElementById('chatbot-fab').click());
     document.getElementById('chat-input')?.addEventListener('input', (e) => { document.getElementById('chat-send').disabled = e.target.value.trim() === ''; });
-    document.getElementById('chat-form')?.addEventListener('submit', (e) => {
+    document.getElementById('chat-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const input = document.getElementById('chat-input');
         const userMsg = input.value.trim();
