@@ -18,6 +18,11 @@
                         class="p-2 mr-4 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
                         <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
+                    <button onclick="window.history.back()"
+                        class="p-2 mr-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center justify-center"
+                        title="Go Back">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
                     <h2 id="header-title" class="text-xl md:text-2xl font-semibold text-gray-800 capitalize">Dashboard</h2>
                 </div>
                 <div class="flex items-center space-x-4">

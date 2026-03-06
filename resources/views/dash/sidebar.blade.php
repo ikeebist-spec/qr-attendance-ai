@@ -38,9 +38,6 @@
         <button data-tab="settings"
             class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium text-purple-100 hover:bg-purple-800/50"><i
                 data-lucide="settings" class="w-[18px] h-[18px]"></i> <span>Settings</span></button>
-        <button onclick="window.history.back()"
-            class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium text-pink-100 hover:bg-pink-800/50 mt-4 border-t border-purple-800 pt-4"><i
-                data-lucide="arrow-left" class="w-[18px] h-[18px]"></i> <span>Go Back</span></button>
     </nav>
 
     <div class="mt-auto border-t border-purple-800 bg-purple-950 p-4">
