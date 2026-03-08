@@ -144,6 +144,11 @@ window.renderMonthlyCompilation = async function () {
             attendanceMap[log.student_id][log.event_id] = true;
         });
 
+        // Calculate average fine per event
+        const avgFine = monthEvents.length > 0
+            ? monthEvents.reduce((sum, ev) => sum + (ev.fine || 50), 0) / monthEvents.length
+            : 50;
+
         // Build Header
         let headHtml = `
             <tr>
@@ -153,11 +158,17 @@ window.renderMonthlyCompilation = async function () {
         monthEvents.forEach(ev => {
             headHtml += `<th class="border border-gray-300 px-3 py-3 bg-gray-100 text-gray-600 min-w-[100px] text-center">${window.escapeHTML(ev.name)}<br><span class="text-[10px] opacity-60">${ev.date}</span></th>`;
         });
-        headHtml += `<th class="border border-gray-300 px-4 py-3 bg-blue-50 text-blue-700 text-center font-bold">Total</th></tr>`;
+        headHtml += `<th class="border border-gray-300 px-4 py-3 bg-green-50 text-green-700 text-center font-bold">Present</th>`;
+        headHtml += `<th class="border border-gray-300 px-4 py-3 bg-orange-50 text-orange-700 text-center font-bold">Absent</th>`;
+        headHtml += `<th class="border border-gray-300 px-4 py-3 bg-red-50 text-red-700 text-center font-bold">Fine</th>`;
+        headHtml += `</tr>`;
         thead.innerHTML = headHtml;
 
         // Build Body (Students)
         let bodyHtml = '';
+        let grandTotalFine = 0;
+        let grandTotalPresent = 0;
+        let grandTotalAbsent = 0;
         const sortedStudents = [...(window.students || [])].sort((a, b) => a.name.localeCompare(b.name));
 
         sortedStudents.forEach((student, idx) => {
@@ -180,13 +191,39 @@ window.renderMonthlyCompilation = async function () {
                 `;
             });
 
-            const attendanceRate = Math.round((presentCount / monthEvents.length) * 100);
+            const absentCount = monthEvents.length - presentCount;
+            const studentFine = absentCount * avgFine;
+            grandTotalFine += studentFine;
+            grandTotalPresent += presentCount;
+            grandTotalAbsent += absentCount;
+
             bodyHtml += `
-                <td class="border border-gray-200 px-4 py-2 text-center font-black ${attendanceRate >= 75 ? 'text-green-600' : 'text-red-600'}">
-                    ${presentCount} / ${monthEvents.length}
+                <td class="border border-gray-200 px-4 py-2 text-center font-black text-green-600">
+                    ${presentCount}
+                </td>
+                <td class="border border-gray-200 px-4 py-2 text-center font-black ${absentCount > 0 ? 'text-red-600' : 'text-gray-400'}">
+                    ${absentCount}
+                </td>
+                <td class="border border-gray-200 px-4 py-2 text-center font-bold ${studentFine > 0 ? 'text-red-600' : 'text-green-600'}">
+                    ₱${studentFine.toFixed(2)}
                 </td>
             </tr>`;
         });
+
+        // Grand Total Footer Row
+        bodyHtml += `
+            <tr class="bg-gray-100 border-t-2 border-gray-400">
+                <td class="border border-gray-300 px-4 py-3 font-black text-gray-800 sticky left-0 z-10 bg-gray-100" colspan="2">GRAND TOTAL (${sortedStudents.length} students)</td>
+        `;
+        monthEvents.forEach(() => {
+            bodyHtml += `<td class="border border-gray-300 bg-gray-100"></td>`;
+        });
+        bodyHtml += `
+                <td class="border border-gray-300 px-4 py-3 text-center font-black text-green-700 bg-green-50 text-base">${grandTotalPresent}</td>
+                <td class="border border-gray-300 px-4 py-3 text-center font-black text-red-700 bg-orange-50 text-base">${grandTotalAbsent}</td>
+                <td class="border border-gray-300 px-4 py-3 text-center font-black text-red-700 bg-red-50 text-base">₱${grandTotalFine.toFixed(2)}</td>
+            </tr>`;
+
         tbody.innerHTML = bodyHtml;
 
     } catch (e) {

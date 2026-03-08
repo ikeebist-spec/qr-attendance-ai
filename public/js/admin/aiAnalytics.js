@@ -1,19 +1,4 @@
-window.isChatOpen = false;
-window.chatMessages = [{ sender: 'bot', text: 'Hello! I am the ESSU CCS AI Assistant. How can I help you manage attendance today?' }];
 
-window.renderChatMessages = function () {
-    const container = document.getElementById('chat-messages');
-    if (!container) return;
-    container.innerHTML = window.chatMessages.map(msg => `
-        <div class="flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}">
-            <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender === 'user'
-            ? 'bg-purple-600 text-white rounded-br-none'
-            : 'bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none'
-        }">${window.escapeHTML(msg.text)}</div>
-        </div>
-    `).join('');
-    container.scrollTop = container.scrollHeight;
-};
 
 window.runAIAnalysis = async function () {
     // 1. Fetch exact total fines based on the new backend calculation
@@ -130,54 +115,4 @@ window.runAIAnalysis = async function () {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('chatbot-fab')?.addEventListener('click', () => {
-        window.isChatOpen = !window.isChatOpen;
-        document.getElementById('chatbot-window').classList.toggle('hidden');
-        document.querySelector('.fab-icon-open').classList.toggle('hidden');
-        document.querySelector('.fab-icon-close').classList.toggle('hidden');
-        if (window.isChatOpen) { window.renderChatMessages(); document.getElementById('chat-input').focus(); }
-    });
-    document.getElementById('close-chat')?.addEventListener('click', () => document.getElementById('chatbot-fab').click());
-    document.getElementById('chat-input')?.addEventListener('input', (e) => { document.getElementById('chat-send').disabled = e.target.value.trim() === ''; });
-    document.getElementById('chat-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('chat-input');
-        const userMsg = input.value.trim();
-        if (!userMsg) return;
-        window.chatMessages.push({ sender: 'user', text: userMsg });
-        input.value = '';
-        document.getElementById('chat-send').disabled = true;
-        window.renderChatMessages();
-        // Dynamic data integration context
-        const contextStr = JSON.stringify({
-            total_fines_accumulated: window.insights ? window.insights.totalFines : 0,
-            students_at_risk_count: window.insights && window.insights.atRiskStudents ? window.insights.atRiskStudents.length : 0,
-            total_recorded_events_count: window.events ? window.events.length : 0,
-            total_students_masterlist_count: window.students ? window.students.length : 0,
-            at_risk_sections: window.insights && window.insights.atRiskYearAndSections ? window.insights.atRiskYearAndSections : 'None',
-            student_names_preview: window.students ? window.students.map(s => s.name).slice(0, 50).join(', ') + (window.students.length > 50 ? '...and more' : '') : ''
-        });
 
-        const replyRef = { sender: 'bot', text: 'Typing...' };
-        window.chatMessages.push(replyRef);
-        window.renderChatMessages();
-
-        (async () => {
-            try {
-                const res = await fetch('/api/chatbot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                    body: JSON.stringify({ message: userMsg, context: contextStr })
-                });
-                const d = await res.json();
-                replyRef.text = d.reply || 'I could not retrieve an answer at this time.';
-            } catch (e) {
-                console.error(e);
-                replyRef.text = 'There was a connection issue contacting the AI engine.';
-            }
-            window.renderChatMessages();
-            document.getElementById('chat-input').focus();
-        })();
-    });
-});

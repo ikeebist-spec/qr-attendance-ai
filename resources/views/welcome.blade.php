@@ -68,45 +68,5 @@
             </main>
         </div>
 
-        <!-- FLOATING AI CHATBOT WIDGET -->
-        <div class="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
-            <!-- Chat Window -->
-            <div id="chatbot-window"
-                class="hidden bg-white rounded-2xl shadow-2xl border border-gray-100 w-80 mb-4 overflow-hidden flex flex-col transition-all duration-300 transform origin-bottom-right"
-                style="height: 400px;">
-                <!-- Header -->
-                <div class="bg-indigo-600 text-white p-4 flex justify-between items-center">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="brain" class="w-5 h-5"></i>
-                        <span class="font-bold">CCS AI Assistant</span>
-                    </div>
-                    <button id="close-chat" class="text-indigo-200 hover:text-white transition-colors">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <!-- Messages Area -->
-                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-3">
-                </div>
-
-                <!-- Input Area -->
-                <form id="chat-form" class="p-3 bg-white border-t border-gray-100 flex items-center space-x-2">
-                    <input type="text" id="chat-input" placeholder="Ask me anything..."
-                        class="flex-1 bg-gray-100 text-sm px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                        autocomplete="off" />
-                    <button type="submit" id="chat-send"
-                        class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50">
-                        <i data-lucide="send" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Floating Action Button -->
-            <button id="chatbot-fab"
-                class="h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105 bg-indigo-600 text-white">
-                <i data-lucide="message-square" class="w-6 h-6 fab-icon-open"></i>
-                <i data-lucide="x" class="w-6 h-6 hidden fab-icon-close"></i>
-            </button>
-        </div>
     </div>
 @endsection
