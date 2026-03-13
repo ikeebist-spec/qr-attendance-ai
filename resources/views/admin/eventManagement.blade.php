@@ -1,8 +1,8 @@
 <!-- 2. EVENTS MANAGEMENT -->
 <div id="tab-events" class="tab-content space-y-6">
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div class="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-purple-100">
         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-            <i data-lucide="calendar" class="mr-2 text-blue-600 w-5 h-5"></i> Create New Event
+            <i data-lucide="calendar" class="mr-2 text-[#A044FF] w-5 h-5"></i> Create New Event
         </h3>
         <form id="add-event-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input required id="event-name" placeholder="Event Name (e.g. Alay sa Paaralan)"
@@ -45,17 +45,17 @@
                 </select>
             </div>
             <button type="submit"
-                class="bg-blue-700 text-white font-bold rounded hover:bg-blue-800 transition-colors md:col-span-4 py-2">Add
+                class="bg-[#A044FF] text-white font-bold rounded hover:bg-[#8B3DDF] transition-colors md:col-span-4 py-2">Add
                 Event</button>
         </form>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-purple-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-purple-100 bg-white/50 flex justify-between items-center">
             <h3 class="font-bold text-gray-800">Event List</h3>
         </div>
         <table class="w-full text-left text-sm">
-            <thead class="bg-white text-gray-500 border-b border-gray-100">
+            <thead class="bg-white/50 text-gray-500 border-b border-purple-100">
                 <tr>
                     <th class="px-6 py-4 font-medium">Event ID</th>
                     <th class="px-6 py-4 font-medium">Name</th>

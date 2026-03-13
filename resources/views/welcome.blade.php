@@ -10,7 +10,7 @@
 
         @include('dash.sidebar')
 
-        <div class="flex-1 flex flex-col relative overflow-hidden bg-gray-50 transition-all duration-300">
+        <div class="flex-1 flex flex-col relative overflow-hidden bg-purple-100/60 transition-all duration-300">
             <!-- HEADER -->
             <header class="bg-white px-4 md:px-8 py-5 shadow-sm flex justify-between items-center z-10">
                 <div class="flex items-center">

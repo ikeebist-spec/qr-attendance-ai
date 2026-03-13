@@ -10,7 +10,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: url('/images/building.png'), url('/images/building.jpg'), #090118;
+            background: url('/images/login-bg.png'), #090118;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;

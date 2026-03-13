@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>ESSU CCS AI Powered Attendance System</title>
+    <title>CCS - FCO AI Powered Attendance System</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-800 overflow-hidden h-[100dvh] flex flex-col">
+<body class="bg-purple-100/60 font-sans text-gray-800 overflow-hidden h-[100dvh] flex flex-col">
 
     <!-- TOAST CONTAINER -->
     <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3"></div>
