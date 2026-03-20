@@ -50,7 +50,28 @@ Route::get('/init-roles', function () {
         );
         echo "Admin account created/updated.<br>";
 
-        // 4. Try running migrations just in case
+        // 4. Create/Update the 4 Representative Scanner Users
+        $scanners = [
+            ['username' => '1st_year_rep', 'name' => 'First Year Representative', 'email' => '1st_year@ccs.essu.edu.ph', 'password' => 'firstyear-2026'],
+            ['username' => '2nd_year_rep', 'name' => 'Second Year Representative', 'email' => '2nd_year@ccs.essu.edu.ph', 'password' => 'secondyear-2026'],
+            ['username' => '3rd_year_rep', 'name' => 'Third Year Representative', 'email' => '3rd_year@ccs.essu.edu.ph', 'password' => 'thirdyear-2026'],
+            ['username' => '4th_year_rep', 'name' => 'Fourth Year Representative', 'email' => '4th_year@ccs.essu.edu.ph', 'password' => 'fourthyear-2026'],
+        ];
+
+        foreach ($scanners as $scanner) {
+            \App\Models\User::updateOrCreate(
+                ['username' => $scanner['username']],
+                [
+                    'name' => $scanner['name'],
+                    'email' => $scanner['email'],
+                    'password' => \Illuminate\Support\Facades\Hash::make($scanner['password']),
+                    'role' => 'scanner',
+                ]
+            );
+        }
+        echo "4 Representative accounts created/updated.<br>";
+
+        // 5. Try running migrations just in case
         try {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             echo "Artisan migrate executed.<br>";

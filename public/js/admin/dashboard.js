@@ -120,6 +120,19 @@ async function bootstrapApp() {
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
+    // Role-based visibility and default tab
+    if (window.USER_ROLE === 'scanner') {
+        document.querySelectorAll('.sidebar-btn').forEach(btn => {
+            if (btn.dataset.tab !== 'scan') {
+                btn.style.display = 'none';
+            }
+        });
+        window.switchTab('scan');
+    } else {
+        // Default to dashboard for admin
+        window.switchTab('dashboard');
+    }
+
     // Auth is handled server-side by Laravel — bootstrap data immediately
     bootstrapApp();
 

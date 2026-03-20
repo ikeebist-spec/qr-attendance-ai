@@ -4,6 +4,10 @@
     {{-- The login view is replaced by real Laravel auth at /login --}}
     {{-- The user is already authenticated + verified to reach here --}}
 
+    <script>
+        window.USER_ROLE = '{{ auth()->user()->role ?? "admin" }}';
+    </script>
+
     <div id="main-view" class="flex h-[100dvh] w-full relative overflow-hidden">
         <!-- Sidebar Mobile Overlay -->
         <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-30 transition-opacity"></div>
