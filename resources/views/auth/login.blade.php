@@ -129,7 +129,7 @@
 
             <div class="relative">
                 <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
-                    class="glass-input" placeholder="Email">
+                    class="glass-input" placeholder="Username">
                 <i class="fa-solid fa-envelope input-icon"></i>
             </div>
 
@@ -144,7 +144,6 @@
                     <input type="checkbox" name="remember" class="w-3.5 h-3.5 rounded border-gray-400 text-[#401b69] focus:ring-[#401b69] bg-transparent">
                     <span class="text-[#2d1348]">Remember me</span>
                 </label>
-                <a href="#" class="text-[#2d1348] hover:text-[#401b69] transition-colors">Forget Password?</a>
             </div>
 
             <button type="submit"

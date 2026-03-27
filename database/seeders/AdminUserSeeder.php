@@ -14,8 +14,8 @@ class AdminUserSeeder extends Seeder
 {
     \App\Models\User::create([
         'name' => 'Admin',
-        'email' => 'admin@gmail.com', // You can change this
-        'password' => bcrypt('password123'), // You can change this
+        'username' => 'admin',
+        'password' => bcrypt('password123'),
         'email_verified_at' => now(),
     ]);
 }
