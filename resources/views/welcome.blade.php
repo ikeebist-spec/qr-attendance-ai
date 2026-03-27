@@ -29,34 +29,7 @@
                     </button>
                     <h2 id="header-title" class="text-xl md:text-2xl font-semibold text-gray-800 capitalize">Dashboard</h2>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div
-                        class="flex items-center text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                        <i data-lucide="calendar" class="w-[14px] h-[14px] mr-2"></i>
-                        <select id="event-selector"
-                            class="bg-transparent outline-none font-bold text-blue-800 cursor-pointer">
-                            <!-- Populated via JS -->
-                        </select>
-                    </div>
-                    <!-- User info + Logout -->
-                    <div class="flex items-center space-x-3">
-                        <div class="flex items-center space-x-2">
-                            <div
-                                class="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center text-white text-sm font-bold">
-                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                            </div>
-                            <span class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</span>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit"
-                                class="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center space-x-1">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                <span>Logout</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
+
             </header>
 
             <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
