@@ -1,255 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login – ESSU CCS</title>
+    <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: url('/images/login-bg.png'), #090118;
+            background: url('/images/login-bg.png') no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
             position: relative;
         }
 
-        /* Animated background mesh overlay */
-        .bg-mesh {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
-            z-index: 1;
-            filter: blur(80px);
-            animation: pulse 12s ease-in-out infinite alternate;
-            pointer-events: none;
-        }
-
-        /* Dark overlay for readability */
+        /* Beautiful gradient overlay to mimic the rich purple/pinkish tone */
         .bg-overlay {
-            position: fixed;
+            position: absolute;
             inset: 0;
-            background: linear-gradient(to bottom, rgba(9, 1, 24, 0.7), rgba(9, 1, 24, 0.9));
-            z-index: 0;
-            pointer-events: none;
+            background: linear-gradient(135deg, rgba(238, 210, 255, 0.75), rgba(167, 139, 250, 0.75), rgba(88, 28, 135, 0.85));
+            backdrop-filter: blur(6px);
+            z-index: 1;
         }
 
-        @keyframes pulse {
-            0% {
-                transform: scale(1) translate(0, 0);
-                opacity: 0.4;
-            }
-
-            100% {
-                transform: scale(1.1) translate(2%, 2%);
-                opacity: 0.7;
-            }
-        }
-
-        /* Premium Glassmorphism with Floating Animation */
+        /* Seamless glass transparency */
         .glass-panel {
-            background: rgba(20, 10, 36, 0.5);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(167, 139, 250, 0.15);
-            box-shadow:
-                0 25px 50px -12px rgba(0, 0, 0, 0.7),
-                inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            animation: float 6s ease-in-out infinite;
+            background: rgba(255, 255, 255, 0.08); /* More transparent */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Very faint border */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            border-radius: 1.5rem;
+            position: relative;
+            z-index: 10;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 400px;
         }
 
-        @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-
-            100% {
-                transform: translateY(0px);
-            }
-        }
-
-        .glass-panel:hover {
-            transform: translateY(-8px) scale(1.015);
-            border-color: rgba(167, 139, 250, 0.4);
-            box-shadow:
-                0 40px 70px -15px rgba(0, 0, 0, 0.8),
-                0 0 30px rgba(139, 92, 246, 0.2);
-            animation-play-state: paused;
-        }
-
-        /* Interactive Inputs */
         .glass-input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(167, 139, 250, 0.25);
-            color: #fff;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(45, 19, 72, 0.3);
+            color: #2d1348;
+            width: 100%;
+            padding: 0.5rem 2rem 0.5rem 0.25rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .glass-input:focus {
             outline: none;
-            border-color: rgba(167, 139, 250, 0.7);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.25);
-            transform: scale(1.02);
+            border-bottom-color: #2d1348;
         }
 
         .glass-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 0.875rem;
-            letter-spacing: 0.05em;
+            color: rgba(45, 19, 72, 0.65);
+            font-size: 0.95rem;
         }
 
-        /* Label float effect */
-        .input-group label {
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            pointer-events: none;
-        }
-
-        .glass-input:focus+label,
-        .glass-input:not(:placeholder-shown)+label {
-            color: #c084fc;
-            text-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
-            transform: translateY(-2px);
-        }
-
-        /* Button Enhancement - High Impact */
-        .btn-premium {
-            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            box-shadow: 0 10px 20px -5px rgba(124, 58, 237, 0.5);
-        }
-
-        .btn-premium::after {
-            content: '';
+        .input-icon {
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            right: 0.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(45, 19, 72, 0.65);
+            font-size: 0.85rem;
         }
 
-        .btn-premium:hover::after {
-            left: 100%;
+        .btn-login {
+            background: linear-gradient(to right, #2d1348, #401b69);
+            box-shadow: 0 8px 15px rgba(45, 19, 72, 0.3);
+            transition: transform 0.2s;
         }
 
-        .btn-premium:hover {
-            transform: scale(1.03) translateY(-2px);
-            box-shadow: 0 15px 30px -5px rgba(168, 85, 247, 0.6);
-            filter: brightness(1.15);
-        }
-
-        .btn-premium:active {
-            transform: scale(0.98);
-        }
-
-        /* Checkbox */
-        .purple-checkbox {
-            accent-color: #a855f7;
-            background-color: transparent;
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 18px rgba(45, 19, 72, 0.4);
         }
     </style>
 </head>
-
-<body class="min-h-screen relative overflow-hidden">
-
+<body>
     <div class="bg-overlay"></div>
-    <div class="bg-mesh"></div>
 
-    <div class="relative z-10 w-full min-h-screen flex items-center justify-center px-4">
-
-        <!-- Login Form Card -->
-        <div class="glass-panel w-full max-w-[400px] rounded-[2.5rem] p-10 md:p-14 relative z-20 overflow-hidden">
-
-            <div class="text-center mb-12">
-                <div class="inline-block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 mb-4">
-                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/80">Powered by
-                        AI</span>
-                </div>
-                <h1 class="text-4xl font-black text-white tracking-tight drop-shadow-2xl">
-                    Welcome <span
-                        class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-300">Back</span>
-                </h1>
-                <p class="text-violet-200/40 mt-3 text-xs font-medium tracking-wide">Enter your credentials to access
-                    the portal</p>
-            </div>
-
-            @if (session('error'))
-                <div
-                    class="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-xs text-red-300 text-center animate-pulse">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @if (session('status'))
-                <div
-                    class="mb-6 bg-green-500/10 border border-green-500/20 rounded-2xl p-4 text-xs text-green-300 text-center">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
-                    <ul class="text-xs text-red-300 space-y-1 list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="/login" class="space-y-6">
-                @csrf
-
-                <div class="relative input-group">
-                    <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
-                        class="glass-input w-full rounded-2xl text-sm" placeholder="Username">
-                    <label for="username"
-                        class="absolute -top-2.5 left-5 bg-[#140824] px-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/80 rounded-md border border-violet-500/20">Username</label>
-                </div>
-
-                <div class="relative input-group mt-8">
-                    <input type="password" name="password" id="password" required
-                        class="glass-input w-full rounded-2xl text-sm" placeholder="••••••••">
-                    <label for="password"
-                        class="absolute -top-2.5 left-5 bg-[#140824] px-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/80 rounded-md border border-violet-500/20">Password</label>
-                </div>
-
-                {{-- Login links disabled --}}
-
-                <button type="submit"
-                    class="btn-premium w-full text-white font-black py-4 rounded-2xl text-xs tracking-[0.25em] uppercase mt-6 shadow-2xl">
-                    Sign In
-                </button>
-
-                {{-- Registration link disabled --}}
-            </form>
-        </div>
-
+    <!-- Top Left Logo Container (Without the text) -->
+    <div class="absolute top-8 left-10 z-20 flex items-center gap-3">
+        @if(file_exists(public_path('images/logo.png')))
+        <img src="/images/logo.png" alt="Logo" class="h-10 w-auto opacity-90 drop-shadow-md">
+        @endif
     </div>
 
-</body>
+    <!-- Login Form Card -->
+    <div class="glass-panel">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-[#2d1348] tracking-tight">Login</h1>
+        </div>
 
+        @if (session('error'))
+            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm text-center">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if (session('status'))
+            <div class="mb-5 bg-green-100/90 border border-green-300 text-green-700 px-4 py-2 rounded-lg text-sm text-center">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="/login" class="space-y-6">
+            @csrf
+
+            <div class="relative">
+                <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
+                    class="glass-input" placeholder="Email">
+                <i class="fa-solid fa-envelope input-icon"></i>
+            </div>
+
+            <div class="relative mt-2">
+                <input type="password" name="password" id="password" required
+                    class="glass-input" placeholder="Password">
+                <i class="fa-solid fa-lock input-icon"></i>
+            </div>
+
+            <div class="flex items-center justify-between text-xs font-medium mt-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="remember" class="w-3.5 h-3.5 rounded border-gray-400 text-[#401b69] focus:ring-[#401b69] bg-transparent">
+                    <span class="text-[#2d1348]">Remember me</span>
+                </label>
+                <a href="#" class="text-[#2d1348] hover:text-[#401b69] transition-colors">Forget Password?</a>
+            </div>
+
+            <button type="submit"
+                class="btn-login w-full text-white font-semibold py-3 rounded-[12px] text-sm mt-8 tracking-wide">
+                Login
+            </button>
+        </form>
+    </div>
+</body>
 </html>
