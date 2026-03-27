@@ -29,6 +29,24 @@ window.apiDelete = async (url) => {
     });
 };
 
+window.apiGet = async (url) => {
+    const res = await fetch(url, {
+        method: 'GET',
+        headers: { 'X-CSRF-TOKEN': window.csrfToken() },
+    });
+    if (!res.ok) throw new Error('Network response was not ok');
+    return res.json();
+};
+
+window.apiPut = async (url, data) => {
+    const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken() },
+        body: JSON.stringify(data),
+    });
+    return res;
+};
+
 // ─── XSS Protection ──────────────────────────────────────────────────────────
 window.escapeHTML = function (str) {
     if (!str) return '';

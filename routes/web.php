@@ -126,9 +126,12 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/api/dashboard', [AdminController::class, 'dashboardData']);
 
-    // AI Masterlist Photo Scanner
     Route::post('/api/masterlist/scan', [AdminController::class, 'scanMasterlistPhoto']);
     Route::post('/api/students/batch', [AdminController::class, 'storeBatchStudents']);
+
+    // Admin Account Management
+    Route::get('/api/admins', [AdminController::class, 'getAdmins']);
+    Route::put('/api/admins/{id}', [AdminController::class, 'updateAdmin']);
 
     // AI Chatbot
     Route::post('/api/chatbot', [AdminController::class, 'askChatbot']);

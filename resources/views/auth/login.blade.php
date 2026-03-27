@@ -3,119 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - CCS FCO</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ParticlesJS for the floating network graph effect seen in the image -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background: url('/images/login-bg.png') no-repeat center center fixed;
-            background-size: cover;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: url('/images/login-bg.png') no-repeat center center;
+            background-size: cover;
             position: relative;
+            overflow: hidden;
         }
 
-        /* Beautiful gradient overlay to mimic the rich purple/pinkish tone */
+        /* Subtle dark overlay for the background to make the white glass pop */
         .bg-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(238, 210, 255, 0.75), rgba(167, 139, 250, 0.75), rgba(88, 28, 135, 0.85));
-            backdrop-filter: blur(6px);
+            background: rgba(15, 20, 35, 0.4);
             z-index: 1;
         }
 
-        /* Seamless glass transparency */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.08); /* More transparent */
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Very faint border */
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-            border-radius: 1.5rem;
-            position: relative;
-            z-index: 10;
-            padding: 3rem 2.5rem;
+        /* Canvas for the glowing network nodes */
+        #particles-js {
+            position: absolute;
             width: 100%;
-            max-width: 400px;
+            height: 100%;
+            z-index: 2;
         }
 
-        .glass-input {
+        /* The giant transparent logo perfectly centered */
+        .watermark-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            max-width: 90vw;
+            opacity: 0.2; /* Very transparent */
+            z-index: 3;
+            pointer-events: none;
+            /* Give it a slight glow/drop shadow so it stands out a bit on various backgrounds */
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.4));
+        }
+
+        /* The central glass card mimicking the reference */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.45); 
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            z-index: 10;
+            width: 100%;
+            max-width: 460px;
+            padding: 3rem 2.5rem;
+            position: relative;
+            animation: floatCard 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatCard {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+
+        /* Input pill boxes */
+        .input-pill {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .input-pill:focus-within {
+            background: #fff;
+            border-color: #7995ff;
+            box-shadow: 0 0 15px rgba(121, 149, 255, 0.4);
+        }
+
+        .input-pill input {
             background: transparent;
             border: none;
-            border-bottom: 1px solid rgba(45, 19, 72, 0.3);
-            color: #2d1348;
-            width: 100%;
-            padding: 0.5rem 2rem 0.5rem 0.25rem;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .glass-input:focus {
             outline: none;
-            border-bottom-color: #2d1348;
-        }
-
-        .glass-input::placeholder {
-            color: rgba(45, 19, 72, 0.65);
+            width: 100%;
+            padding: 0.5rem;
+            margin-left: 0.75rem;
+            font-weight: 500;
+            color: #1f2937;
             font-size: 0.95rem;
         }
 
-        .input-icon {
-            position: absolute;
-            right: 0.25rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(45, 19, 72, 0.65);
-            font-size: 0.85rem;
+        .input-pill input::placeholder {
+            color: #6b7280;
+            font-weight: 500;
         }
 
-        .btn-login {
-            background: linear-gradient(to right, #2d1348, #401b69);
-            box-shadow: 0 8px 15px rgba(45, 19, 72, 0.3);
-            transition: transform 0.2s;
+        .pill-icon {
+            color: #6b7280;
+            font-size: 1.15rem;
+            transition: color 0.3s ease;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 18px rgba(45, 19, 72, 0.4);
+        .input-pill:focus-within .pill-icon {
+            color: #7995ff;
+        }
+
+        /* Solid White Login Button */
+        .btn-solid {
+            background: #ffffff;
+            color: #111827;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-radius: 9999px;
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-solid:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.25);
+            background: #f9fafb;
         }
     </style>
 </head>
 <body>
+
+    <!-- Background Layers -->
     <div class="bg-overlay"></div>
+    
+    <!-- Giant transparent CCS FCO logo in the very middle -->
+    @if(file_exists(public_path('images/logo.png')))
+        <img src="/images/logo.png" alt="CCS FCO Watermark" class="watermark-logo">
+    @endif
 
-    <!-- Top Left Logo Container (Without the text) -->
-    <div class="absolute top-8 left-10 z-20 flex items-center gap-3">
-        @if(file_exists(public_path('images/logo.png')))
-        <img src="/images/logo.png" alt="Logo" class="h-10 w-auto opacity-90 drop-shadow-md">
-        @endif
-    </div>
-
-    <!-- Login Form Card -->
-    <div class="glass-panel">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-[#2d1348] tracking-tight">Login</h1>
+    <!-- Interactive Network Graph matching the image -->
+    <div id="particles-js"></div>
+    
+    <!-- Glassmorphism Card Wrapper -->
+    <div class="glass-card text-center">
+        
+        <!-- Status Indicators (Online / Secured) -->
+        <div class="flex justify-center items-center gap-8 mb-6 text-xs font-bold text-white tracking-widest uppercase">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]"></span>
+                <span>Online</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_8px_#facc15]"></span>
+                <span>Secured</span>
+            </div>
         </div>
 
+        <!-- Heading -->
+        <h2 class="text-[1.8rem] font-black text-white mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-wide">WELCOME BACK!</h2>
+
+        <!-- Alert messages -->
         @if (session('error'))
-            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm text-center">
+            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm text-center font-bold shadow-lg">
                 {{ session('error') }}
             </div>
         @endif
-
-        @if (session('status'))
-            <div class="mb-5 bg-green-100/90 border border-green-300 text-green-700 px-4 py-2 rounded-lg text-sm text-center">
-                {{ session('status') }}
-            </div>
-        @endif
-
         @if ($errors->any())
-            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm">
+            <div class="mb-5 bg-red-100/90 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm font-bold shadow-lg">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -124,33 +193,59 @@
             </div>
         @endif
 
-        <form method="POST" action="/login" class="space-y-6">
+        <form method="POST" action="/login">
             @csrf
 
-            <div class="relative">
-                <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
-                    class="glass-input" placeholder="Username">
-                <i class="fa-solid fa-envelope input-icon"></i>
+            <!-- Username Pill -->
+            <div class="input-pill">
+                <i class="fa-regular fa-user pill-icon"></i>
+                <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus placeholder="Username">
             </div>
 
-            <div class="relative mt-2">
-                <input type="password" name="password" id="password" required
-                    class="glass-input" placeholder="Password">
-                <i class="fa-solid fa-lock input-icon"></i>
+            <!-- Password Pill -->
+            <div class="input-pill">
+                <i class="fa-solid fa-key pill-icon"></i>
+                <input type="password" name="password" id="password" required placeholder="Password">
             </div>
 
-            <div class="flex items-center justify-between text-xs font-medium mt-2">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="remember" class="w-3.5 h-3.5 rounded border-gray-400 text-[#401b69] focus:ring-[#401b69] bg-transparent">
-                    <span class="text-[#2d1348]">Remember me</span>
-                </label>
-            </div>
-
-            <button type="submit"
-                class="btn-login w-full text-white font-semibold py-3 rounded-[12px] text-sm mt-8 tracking-wide">
+            <!-- Solid White Login Button -->
+            <button type="submit" class="btn-solid">
                 Login
             </button>
         </form>
     </div>
+
+    <!-- Initialize Network Graph Particles -->
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 70, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.6, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": {
+                    "enable": true, "distance": 160, "color": "#ffffff", "opacity": 0.5, "width": 1.5
+                },
+                "move": {
+                    "enable": true, "speed": 1.5, "direction": "none", "random": false, "straight": false,
+                    "out_mode": "out", "bounce": false
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": { "distance": 180, "line_linked": { "opacity": 1 } },
+                    "push": { "particles_nb": 4 }
+                }
+            },
+            "retina_detect": true
+        });
+    </script>
 </body>
 </html>

@@ -17,7 +17,7 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'CCS-FCO OFFICER',
                 'email' => 'admin@ccs.essu.edu.ph', // Placeholder since it's required in some setups but we use username
-                'password' => \Illuminate\Support\Facades\Hash::make('ccsattendanceqr-2026'),
+                'password' => \Illuminate\Support\Facades\Hash::make('ccsattendanceqrc-2026'),
                 'role' => 'super_admin',
             ]
         );

@@ -413,4 +413,35 @@ class AdminController extends Controller implements HasMiddleware
         $text = $response->json('candidates.0.content.parts.0.text') ?? 'I am sorry, I am unable to process that right now.';
         return response()->json(['reply' => $text]);
     }
+
+    // ─── ADMIN ACCOUNTS MANAGEMENT ──────────────────────────────────────────
+
+    public function getAdmins(Request $request)
+    {
+        // Only allow super admin to view this list theoretically, but dashboard UI will handle it
+        $admins = \App\Models\User::orderBy('id', 'asc')->get(['id', 'name', 'username', 'role']);
+        return response()->json($admins);
+    }
+
+    public function updateAdmin(Request $request, $id)
+    {
+        $admin = \App\Models\User::findOrFail($id);
+
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users,username,' . $id,
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $admin->username = $request->username;
+        if ($request->filled('password')) {
+            $admin->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+        $admin->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin account updated successfully.',
+            'admin' => $admin
+        ]);
+    }
 }

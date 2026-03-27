@@ -2,26 +2,36 @@
 <div id="tab-settings" class="tab-content">
     <div class="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-fit">
-            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-bold text-gray-800">Account Settings</h3>
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Manage Admin Accounts</h3>
+                <span class="text-[10px] uppercase tracking-wider bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded hidden" id="super-admin-badge">Super Admin</span>
             </div>
             <div class="p-6">
-                <h4 class="text-sm font-bold text-gray-600 mb-4 uppercase tracking-wider">Change Password</h4>
-                <form id="password-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">Current Password</label>
-                        <input type="password" required id="pwd-current" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">New Password</label>
-                        <input type="password" required id="pwd-new" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">Confirm New Password</label>
-                        <input type="password" required id="pwd-confirm" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" />
-                    </div>
-                    <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded font-medium hover:bg-gray-900 transition-colors">Update Password</button>
-                </form>
+                <p class="text-sm text-yellow-600 bg-yellow-50 p-3 rounded border border-yellow-200 hidden" id="settings-unauthorized-msg">You do not have permission to manage admin accounts. Only the Super Admin can access this panel.</p>
+                
+                <div id="manage-admins-container" class="hidden">
+                    <form id="manage-admin-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1 font-semibold">Select Account</label>
+                            <select id="admin-account-selector" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none bg-gray-50">
+                                <option value="">Loading accounts...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1 font-semibold">Username</label>
+                            <input type="text" required id="admin-new-username" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1 font-semibold">New Password</label>
+                            <input type="password" id="admin-new-password" placeholder="Leave blank to keep current password" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" />
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" id="btn-save-admin" class="bg-gray-800 text-white px-6 py-2 rounded font-medium hover:bg-gray-900 transition-colors w-full md:w-auto flex justify-center items-center">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
