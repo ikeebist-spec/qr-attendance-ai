@@ -132,7 +132,4 @@ Route::middleware(['auth'])->group(function () {
     // Admin Account Management
     Route::get('/api/admins', [AdminController::class, 'getAdmins']);
     Route::put('/api/admins/{id}', [AdminController::class, 'updateAdmin']);
-
-    // AI Chatbot
-    Route::post('/api/chatbot', [AdminController::class, 'askChatbot']);
 });

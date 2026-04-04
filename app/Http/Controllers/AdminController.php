@@ -419,63 +419,6 @@ class AdminController extends Controller implements HasMiddleware
         ]);
     }
 
-    // ─── CHATBOT AI SUPPORT ──────────────────────────────────────────────────
-
-    public function askChatbot(Request $request)
-    {
-        $request->validate(['message' => 'required|string', 'context' => 'required|string']);
-
-        $totalStudents = Student::count();
-        $totalEventsCount = Event::count();
-
-        $eventsList = Event::select('name', 'date', 'type', 'fine')->get()->map(function ($ev) {
-            return "{$ev->name} ({$ev->date}, {$ev->type}, Fine: ₱{$ev->fine})";
-        })->implode('; ');
-
-        $studentsList = Student::select('student_id', 'name', 'year_and_section')->take(60)->get()->map(function ($s) {
-            return "{$s->name} (ID: {$s->student_id}, Section: {$s->year_and_section})";
-        })->implode('; ');
-
-        $apiKey = env('GEMINI_API_KEY');
-        $prompt = "You are the AI Assistant for the ESSU CCS Attendance System. Answer the user's question concisely, perfectly, and accurately based ONLY on the following System Data.\n\n--- SYSTEM DATA ---\nFrontend Summary Context: {$request->context}\nTotal Students in Masterlist: {$totalStudents}\nTotal Events Recorded: {$totalEventsCount}\nDetailed Event List: {$eventsList}\nStudent List (up to 60): {$studentsList}\n-------------------\n\nUser Question: {$request->message}\n\nIf the user asks about specific numbers (like 'how many students' or 'how many events'), use the exact numbers provided in the System Data above. Start your answer directly, be helpful and professional:";
-
-        $payload = [
-            'contents' => [['parts' => [['text' => $prompt]]]],
-            'generationConfig' => ['temperature' => 0.2, 'maxOutputTokens' => 500],
-        ];
-
-        $models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite'];
-        $response = null;
-
-        for ($attempt = 0; $attempt < 3; $attempt++) {
-            $model = $models[$attempt % count($models)];
-            try {
-                $response = Http::withoutVerifying()
-                    ->withOptions(['timeout' => 30])
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", $payload);
-
-                if ($response->ok())
-                    break;
-                if ($response->status() === 429 && $attempt < 2) {
-                    sleep(5);
-                    continue;
-                }
-            } catch (\Exception $e) {
-                if ($attempt >= 2)
-                    return response()->json(['reply' => 'Connection to AI failed. Please try again later.']);
-                sleep(3);
-            }
-        }
-
-        if (!$response || !$response->ok()) {
-            \Illuminate\Support\Facades\Log::error('Gemini API Error: ' . ($response ? $response->body() : 'No response'));
-            return response()->json(['reply' => 'The AI is temporarily unavailable due to high usage. Please wait a moment and try again.']);
-        }
-
-        $text = $response->json('candidates.0.content.parts.0.text') ?? 'I am sorry, I am unable to process that right now.';
-        return response()->json(['reply' => $text]);
-    }
-
     // ─── ADMIN ACCOUNTS MANAGEMENT ──────────────────────────────────────────
 
     public function getAdmins(Request $request)

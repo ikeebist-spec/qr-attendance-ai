@@ -170,7 +170,14 @@ window.simulateScan = async function (decodedText) {
 
     // Final Validation
     if (!logType) {
+        const student = window.students.find(s => String(s.student_id) === qrCode);
+        const name = student ? student.name : `ID: ${qrCode}`;
+        const timeLog = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        
         window.showToast('Scan Failed: Outside of allowed attendance windows.', 'error');
+        if (window.logActivity) {
+            window.logActivity(`REJECTED SCAN: ${name} attempted at ${timeLog} for ${currentEvent.name}. Reason: Outside allowed windows.`);
+        }
         window.recentScans.delete(qrCode);
         return;
     }
@@ -185,6 +192,10 @@ window.simulateScan = async function (decodedText) {
         window.showToast(`THANK YOU! ${student.name}`);
         window.playSuccessSound();
         window.speak('THANK YOU!');
+        
+        if (window.logActivity) {
+            window.logActivity(`SUCCESSFUL SCAN: ${student.name} logged for ${logType} in ${currentEvent.name}.`);
+        }
 
         // Add to background queue to prevent freezing the server
         window.scanQueue.push({
@@ -205,6 +216,9 @@ window.simulateScan = async function (decodedText) {
 
     } else {
         window.showToast('Invalid QR: Not found in database.', 'error');
+        if (window.logActivity) {
+            window.logActivity(`SECURITY ALERT: Unknown QR scanned: ${qrCode}`);
+        }
         window.recentScans.set(qrCode, now - 2000);
     }
 };
