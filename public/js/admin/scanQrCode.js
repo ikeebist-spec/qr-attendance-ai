@@ -139,30 +139,44 @@ window.simulateScan = async function (decodedText) {
 
     // ─── Time Window Verification ─────────────────────────────────────────────
     const nowTime = new Date();
+    const currentTimeStr = nowTime.getHours().toString().padStart(2, '0') + ':' + nowTime.getMinutes().toString().padStart(2, '0');
 
-    // Helper to parse "YYYY-MM-DD HH:mm:ss" strings from server (Asia/Manila)
-    const parseServerDate = (dateStr) => {
-        if (!dateStr) return null;
-        // If it's already an ISO string or has timezone, new Date() works.
-        // If it's a "YYYY-MM-DD HH:mm:ss" string, we assume it's Asia/Manila.
-        if (dateStr.includes('T') || dateStr.includes('Z')) return new Date(dateStr);
-        return new Date(dateStr.replace(' ', 'T') + '+08:00');
+    // Helper to check if current time is within HH:mm range
+    const isWithinWindow = (start, end) => {
+        if (!start || !end) return false;
+        return currentTimeStr >= start && currentTimeStr <= end;
     };
 
-    const startTime = parseServerDate(currentEvent.start_time);
-    const endTime = parseServerDate(currentEvent.end_time);
+    let logType = null;
 
-    if (startTime && nowTime < startTime) {
-        window.showToast(`Not started. Please wait until ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`, 'error');
+    if (currentEvent.is_single_scan) {
+        // --- SINGLE SCAN MODE ---
+        if (isWithinWindow(currentEvent.start_time, currentEvent.end_time)) {
+            logType = 'Present';
+        }
+    } else {
+        // --- MULTI-SESSION MODE ---
+        if (isWithinWindow(currentEvent.morn_in_start, currentEvent.morn_in_end)) logType = 'Morning In';
+        else if (isWithinWindow(currentEvent.morn_out_start, currentEvent.morn_out_end)) logType = 'Morning Out';
+        else if (isWithinWindow(currentEvent.aft_in_start, currentEvent.aft_in_end)) logType = 'Afternoon In';
+        else if (isWithinWindow(currentEvent.aft_out_start, currentEvent.aft_out_end)) logType = 'Afternoon Out';
+    }
+
+    // Auto-switch dropdown for Multi-Session (convenience)
+    if (!currentEvent.is_single_scan && logType) {
+        const selector = document.getElementById('log-type-selector');
+        if (selector && selector.value !== logType) selector.value = logType;
+    }
+
+    // Final Validation
+    if (!logType) {
+        window.showToast('Scan Failed: Outside of allowed attendance windows.', 'error');
         window.recentScans.delete(qrCode);
         return;
     }
 
-    if (endTime && nowTime > endTime) {
-        window.showToast(`Scan failed: Attendance closed at ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`, 'error');
-        window.recentScans.delete(qrCode);
-        return;
-    }
+    // Capture device time for accuracy
+    const deviceTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const student = window.students.find(s => String(s.student_id) === qrCode);
 
@@ -171,9 +185,6 @@ window.simulateScan = async function (decodedText) {
         window.showToast(`THANK YOU! ${student.name}`);
         window.playSuccessSound();
         window.speak('THANK YOU!');
-
-        // Capture device time for accuracy
-        const deviceTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         // Add to background queue to prevent freezing the server
         window.scanQueue.push({
@@ -184,6 +195,7 @@ window.simulateScan = async function (decodedText) {
                 event_id: currentEvent.id,
                 student_name: student.name,
                 year_and_section: student.year_and_section,
+                log_type: logType,
                 scanned_at: deviceTime
             }
         });
@@ -197,6 +209,18 @@ window.simulateScan = async function (decodedText) {
     }
 };
 
+window.updateScannerUI = function () {
+    const currentEvent = window.events.find(e => e.id === window.selectedEventId);
+    const container = document.getElementById('session-selector-container');
+    if (!container) return;
+
+    if (currentEvent && currentEvent.is_single_scan) {
+        container.classList.add('hidden');
+    } else {
+        container.classList.remove('hidden');
+    }
+};
+
 // Map cleanup to prevent memory bloat
 setInterval(() => {
     const timeNow = Date.now();
@@ -206,3 +230,8 @@ setInterval(() => {
         }
     }
 }, 10000);
+
+// Initialize UI on load
+document.addEventListener('DOMContentLoaded', () => {
+    window.updateScannerUI();
+});

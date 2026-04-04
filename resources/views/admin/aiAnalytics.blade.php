@@ -4,7 +4,10 @@
     <div class="bg-purple-900 rounded-2xl p-8 text-white flex justify-between items-center shadow-lg relative overflow-hidden">
         <div class="relative z-10">
             <h2 class="text-2xl font-bold mb-2 flex items-center"><i data-lucide="brain" class="mr-3"></i> AI Analysis Engine</h2>
-            <p class="text-purple-200 max-w-xl">The system has automatically calculated fines based on escalating logic and predicted structural absenteeism risks.</p>
+            <div class="flex items-start space-x-3 text-purple-200 max-w-xl text-sm">
+                <i data-lucide="info" class="w-5 h-5 mt-0.5 flex-shrink-0"></i>
+                <p>Calculated via <b>Decision Tree Model v2.1</b>. Fines are now weighted by event priority (Mandatory/Major) and absence escalation (1.2x - 1.5x penalty branches).</p>
+            </div>
         </div>
         <div class="text-right relative z-10">
             <p class="text-blue-200 text-sm font-medium uppercase tracking-wider">Total Fine Computations</p>
@@ -41,10 +44,10 @@
             <thead class="bg-white text-gray-500 border-b border-gray-100">
                 <tr>
                     <th class="px-6 py-3">ID</th>
-                    <th class="px-6 py-3">Name</th>
-                    <th class="px-6 py-3">Year and Section</th>
-                    <th class="px-6 py-3">Missed Events</th>
-                    <th class="px-6 py-3">Computed Fine</th>
+                    <th class="px-6 py-3">Student Name</th>
+                    <th class="px-6 py-3">Risk Status</th>
+                    <th class="px-6 py-3 text-center">Absences</th>
+                    <th class="px-6 py-3">Weighted Fine</th>
                 </tr>
             </thead>
             <tbody id="ai-risk-students-body">

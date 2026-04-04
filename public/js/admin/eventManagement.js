@@ -10,27 +10,45 @@ window.renderEvents = function () {
     const tbody = document.getElementById('events-table-body');
     if (!tbody) return;
     tbody.innerHTML = window.events.map(ev => {
-        const start = ev.start_time ? new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
-        const end = ev.end_time ? new Date(ev.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+        let timeInfo = '';
+        if (ev.is_single_scan) {
+            timeInfo = `<span class="text-[10px] uppercase font-bold text-green-600">Single: ${ev.start_time || '??'} - ${ev.end_time || '??'}</span>`;
+        } else {
+            const morning = (ev.morn_in_start || ev.morn_out_end) ? `${ev.morn_in_start || '??'} - ${ev.morn_out_end || '??'}` : 'None';
+            const afternoon = (ev.aft_in_start || ev.aft_out_end) ? `${ev.aft_in_start || '??'} - ${ev.aft_out_end || '??'}` : 'None';
+            timeInfo = `
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase font-bold text-blue-500">AM: ${morning}</span>
+                    <span class="text-[10px] uppercase font-bold text-purple-500">PM: ${afternoon}</span>
+                </div>
+            `;
+        }
+        
         return `
-            <tr class="border-b border-gray-50 hover:bg-gray-50">
-                <td class="px-6 py-3 font-medium text-gray-900">${ev.id}</td>
-                <td class="px-6 py-3 text-gray-700 font-bold">${window.escapeHTML(ev.name)}</td>
-                <td class="px-6 py-3 text-gray-600 font-semibold">${window.escapeHTML(ev.month || 'N/A')}</td>
-                <td class="px-6 py-3 text-gray-600">${window.escapeHTML(ev.date)}</td>
-                <td class="px-6 py-3 text-gray-600 font-mono text-xs">${start} - ${end}</td>
-                <td class="px-6 py-3 text-gray-800 font-bold">₱${ev.fine || 50}</td>
-                <td class="px-6 py-3">
-                    <span class="px-2 py-1 rounded text-xs font-bold ${ev.type === 'Mandatory' ? 'bg-red-100 text-red-700' : ev.type === 'Major' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}">${window.escapeHTML(ev.type)}</span>
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors text-xs">
+                <td class="px-6 py-4 font-medium text-gray-400">${ev.id}</td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col">
+                        <span class="text-gray-800 font-bold">${window.escapeHTML(ev.name)}</span>
+                        <span class="text-[9px] uppercase font-black tracking-tighter ${ev.is_single_scan ? 'text-green-500' : 'text-purple-500'}">${ev.is_single_scan ? 'Single Scan' : 'Multi-Session'}</span>
+                    </div>
                 </td>
-                <td class="px-6 py-3 text-center">
-                    <button onclick="window.deleteEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Delete Event">
+                <td class="px-6 py-4 text-gray-600 font-semibold">${window.escapeHTML(ev.month || 'N/A')}</td>
+                <td class="px-6 py-4 text-gray-600">${window.escapeHTML(ev.date)}</td>
+                <td class="px-6 py-4">${timeInfo}</td>
+                <td class="px-6 py-4 text-gray-800 font-bold">₱${ev.fine || 50}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${ev.type === 'Mandatory' ? 'bg-red-100 text-red-700 border border-red-200' : ev.type === 'Major' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-700 border border-gray-200'}">${window.escapeHTML(ev.type)}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="window.deleteEvent(${ev.id})" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-all" title="Delete Event">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </td>
             </tr>
         `;
     }).join('');
+    if (window.lucide) window.lucide.createIcons();
 };
 
 window.deleteEvent = async function (id) {
@@ -61,11 +79,40 @@ window.deleteEvent = async function (id) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Mode Switching Logic
+    const btnSingle = document.getElementById('btn-mode-single');
+    const btnMulti = document.getElementById('btn-mode-multi');
+    const secSingle = document.getElementById('section-single-scan');
+    const secMulti = document.getElementById('section-multi-session');
+    const inputHidden = document.getElementById('event-is-single-scan');
+
+    if (btnSingle && btnMulti) {
+        btnSingle.addEventListener('click', () => {
+            btnSingle.className = "flex-1 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-purple-600 text-white shadow-sm";
+            btnMulti.className = "flex-1 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all text-gray-500 hover:bg-gray-100";
+            secSingle.classList.remove('hidden');
+            secMulti.classList.add('hidden');
+            inputHidden.value = "1";
+        });
+
+        btnMulti.addEventListener('click', () => {
+            btnMulti.className = "flex-1 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-purple-600 text-white shadow-sm";
+            btnSingle.className = "flex-1 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all text-gray-500 hover:bg-gray-100";
+            secSingle.classList.add('hidden');
+            secMulti.classList.remove('hidden');
+            inputHidden.value = "0";
+        });
+    }
+
     const sel = document.getElementById('event-selector');
     if (sel) {
         sel.addEventListener('change', (e) => {
             window.selectedEventId = Number(e.target.value);
-            if (window.activeTab === 'scan') document.getElementById('scan-event-name').innerText = window.events.find(ev => ev.id === window.selectedEventId)?.name;
+            if (window.activeTab === 'scan') {
+                const evShow = document.getElementById('scan-event-name');
+                if (evShow) evShow.innerText = window.events.find(ev => ev.id === window.selectedEventId)?.name;
+                if (window.updateScannerUI) window.updateScannerUI();
+            }
             if (window.renderDashboard) window.renderDashboard();
             if (window.renderRecords) window.renderRecords();
         });
@@ -75,29 +122,61 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('event-name').value;
-            const date = document.getElementById('event-date').value;
-            const month = document.getElementById('event-month').value;
-            const startTime = document.getElementById('event-start-time').value;
-            const duration = Number(document.getElementById('event-duration').value);
-            const type = document.getElementById('event-type').value;
-            const fine = Number(document.getElementById('event-fine').value) || 50;
+            console.log('Form submission started');
+            
+            try {
+                const nameControl = document.getElementById('event-name');
+                const dateControl = document.getElementById('event-date');
+                const monthControl = document.getElementById('event-month');
+                const typeControl = document.getElementById('event-type');
+                const fineControl = document.getElementById('event-fine');
+                const isSingleControl = document.getElementById('event-is-single-scan');
 
-            const res = await window.apiPost('/api/events', {
-                name, date, month, type, fine,
-                start_time: startTime,
-                duration
-            });
-            if (res.ok) {
-                const newEvent = await res.json();
-                window.events.push(newEvent);
-                if (window.logActivity) window.logActivity(`Added new event: ${name}`);
-                window.showToast(`Successfully added event: ${name}`);
-                window.renderEvents();
-                window.renderEventSelector();
-                e.target.reset();
-            } else {
-                window.showToast('Failed to add event.', 'error');
+                if (!nameControl || !dateControl || !monthControl || !typeControl || !fineControl || !isSingleControl) {
+                    throw new Error('Some form controls are missing from the page.');
+                }
+
+                const name = nameControl.value;
+                const date = dateControl.value;
+                const month = monthControl.value;
+                const type = typeControl.value;
+                const fine = Number(fineControl.value) || 50;
+                const isSingle = isSingleControl.value === "1";
+
+                const payload = {
+                    name, date, month, type, fine,
+                    is_single_scan: isSingle,
+                    start_time: isSingle ? (document.getElementById('event-start-time')?.value || null) : null,
+                    end_time: isSingle ? (document.getElementById('event-end-time')?.value || null) : null,
+                    morn_in_start: !isSingle ? (document.getElementById('morn-in-start')?.value || null) : null,
+                    morn_in_end: !isSingle ? (document.getElementById('morn-in-end')?.value || null) : null,
+                    morn_out_start: !isSingle ? (document.getElementById('morn-out-start')?.value || null) : null,
+                    morn_out_end: !isSingle ? (document.getElementById('morn-out-end')?.value || null) : null,
+                    aft_in_start: !isSingle ? (document.getElementById('aft-in-start')?.value || null) : null,
+                    aft_in_end: !isSingle ? (document.getElementById('aft-in-end')?.value || null) : null,
+                    aft_out_start: !isSingle ? (document.getElementById('aft-out-start')?.value || null) : null,
+                    aft_out_end: !isSingle ? (document.getElementById('aft-out-end')?.value || null) : null,
+                };
+
+                console.log('Sending payload:', payload);
+                const res = await window.apiPost('/api/events', payload);
+                
+                if (res.ok) {
+                    const newEvent = await res.json();
+                    window.events.push(newEvent);
+                    if (window.logActivity) window.logActivity(`Added new event: ${name}`);
+                    window.showToast(`Successfully added event: ${name}`);
+                    window.renderEvents();
+                    window.renderEventSelector();
+                    form.reset();
+                    if (btnSingle) btnSingle.click();
+                } else {
+                    const errData = await res.json();
+                    window.showToast(errData.error || 'Failed to add event: ' + (JSON.stringify(errData.errors) || ''), 'error');
+                }
+            } catch (err) {
+                console.error('Submission error:', err);
+                alert('An error occurred during submission: ' + err.message);
             }
         });
     }

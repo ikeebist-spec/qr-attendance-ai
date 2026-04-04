@@ -33,12 +33,22 @@ window.runAIAnalysis = async function () {
     }).filter(s => s.averageAbsences > 0).sort((a, b) => b.averageAbsences - a.averageAbsences);
 
     const warnings = [];
+    
+    // Pattern Detection Logic (Decision Tree Branches)
     if (yearAndSectionRisk.length > 0 && yearAndSectionRisk[0].averageAbsences >= 2)
-        warnings.push(`Predictive Alert: Year and Section ${yearAndSectionRisk[0].year_and_section} shows severe absenteeism. Recommend FCO intervention.`);
+        warnings.push(`Predictive Alert: Section ${yearAndSectionRisk[0].year_and_section} matches 'Structural Absenteeism' pattern. Average absences are above threshold.`);
+    
     if (riskList.length > 5)
-        warnings.push('Systematic Risk: High volume of students with multiple absences.');
+        warnings.push('Decision Tree Result: Detected a Systematic Risk across multiple sections.');
+
+    // Specific Pattern: Critical Avoidance
+    const criticalStudents = window.students.filter(s => s.absences > 0 && s.risk_level === 'High Risk').length;
+    if (criticalStudents > 0) {
+        warnings.push(`Decision Tree Result: ${criticalStudents} students identified as 'High Risk' due to Mandatory event absences and escalation logic.`);
+    }
+
     if (warnings.length === 0)
-        warnings.push('Attendance trends are currently stable.');
+        warnings.push('Attendance trends are currently stable based on tree analysis.');
 
     window.insights = { totalFines, patternWarnings: warnings, atRiskStudents: riskList.slice(0, 5), atRiskYearAndSections: yearAndSectionRisk.slice(0, 3) };
 
@@ -103,14 +113,21 @@ window.runAIAnalysis = async function () {
     }
 
     const stuEl = document.getElementById('ai-risk-students-body');
-    if (stuEl) stuEl.innerHTML = riskList.slice(0, 5).map(s => `
+    if (stuEl) stuEl.innerHTML = riskList.slice(0, 5).map(s => {
+        const riskClass = s.risk_level === 'High Risk' ? 'text-red-600' : (s.risk_level === 'Warning' ? 'text-orange-600' : 'text-green-600');
+        return `
         <tr class="border-b border-gray-50">
             <td class="px-6 py-3 font-medium">${window.escapeHTML(s.student_id)}</td>
             <td class="px-6 py-3">${window.escapeHTML(s.name)}</td>
-            <td class="px-6 py-3">${window.escapeHTML(s.year_and_section)}</td>
-            <td class="px-6 py-3 font-bold text-red-600">${s.absences}</td>
+            <td class="px-6 py-3">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${s.risk_level === 'High Risk' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-orange-50 border-orange-200 text-orange-700'}">
+                    ${s.risk_level || 'At Risk'}
+                </span>
+            </td>
+            <td class="px-6 py-3 font-bold text-gray-700 text-center">${s.absences}</td>
             <td class="px-6 py-3 font-bold text-gray-800">₱${s.fine}</td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };

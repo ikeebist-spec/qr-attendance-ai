@@ -26,7 +26,7 @@ window.renderFines = function () {
 
     sections.forEach((section, index) => {
         const folderId = `fines-sec-${index}`;
-        const students = grouped[section];
+        const students = grouped[section].sort((a, b) => a.name.localeCompare(b.name));
 
         let sectionTotalFines = 0;
         students.forEach(s => {
@@ -76,6 +76,7 @@ window.renderFines = function () {
                     </td>
                     <td class="px-6 py-3 text-right">
                         <p class="font-bold text-gray-800">₱${fine.toFixed(2)}</p>
+                        <p class="text-[10px] text-purple-600 font-medium">Weighted Logic</p>
                     </td>
                 </tr>
             `;

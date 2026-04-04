@@ -32,6 +32,11 @@
                     <i data-lucide="table-properties" class="w-4 h-4 mr-2 text-green-600"></i>
                     Excel View
                 </button>
+                <button id="btn-download-csv"
+                    class="text-xs font-bold uppercase tracking-widest bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center hidden">
+                    <i data-lucide="download" class="w-4 h-4 mr-2 text-white"></i>
+                    Download Excel (CSV)
+                </button>
                 <span id="records-event-info" class="text-xs text-gray-500 font-medium">Event: <span
                         id="records-event-name" class="text-gray-800 font-bold"></span></span>
                 <span class="text-xs text-gray-400">| Total: <span id="records-count"
@@ -50,6 +55,7 @@
                     <th class="px-6 py-4 font-medium">ID</th>
                     <th class="px-6 py-4 font-medium">Name</th>
                     <th class="px-6 py-4 font-medium">Year and Section</th>
+                    <th class="px-6 py-4 font-medium">Session</th>
                     <th class="px-6 py-4 font-medium text-center">Status & Time</th>
                 </tr>
             </thead>

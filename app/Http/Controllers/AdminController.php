@@ -36,18 +36,47 @@ class AdminController extends Controller implements HasMiddleware
         $totalEvents = Event::count();
         $totalEventFines = Event::sum('fine');
 
-        $attendanceCounts = AttendanceLog::join('events', 'attendance_logs.event_id', '=', 'events.id')
-            ->select('attendance_logs.student_id', \Illuminate\Support\Facades\DB::raw('sum(events.fine) as attended_fine'), \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
-            ->groupBy('attendance_logs.student_id')
-            ->get()
-            ->keyBy('student_id');
+        $attendanceLogs = AttendanceLog::all()->groupBy('student_id');
 
         foreach ($students as $student) {
-            $present = $attendanceCounts[$student->student_id]->present_count ?? 0;
-            $attendedFine = $attendanceCounts[$student->student_id]->attended_fine ?? 0;
+            $studentLogs = $attendanceLogs[$student->student_id] ?? collect();
+            $presentEventIds = $studentLogs->pluck('event_id')->unique()->toArray();
+            
+            // --- DECISION TREE FINE COMPUTATION ---
+            $allEvents = Event::orderBy('date', 'asc')->get();
+            $computedFine = 0;
+            $absenceSequence = 0;
+            $mandatoryMissed = 0;
 
-            $student->absences = max(0, $totalEvents - $present);
-            $student->fine = max(0, $totalEventFines - $attendedFine);
+            foreach ($allEvents as $event) {
+                if (!in_array($event->id, $presentEventIds)) {
+                    $absenceSequence++;
+                    $multiplier = 1.0;
+
+                    // Branch 1: Event Type Weighting
+                    if ($event->type === 'Mandatory') {
+                        $multiplier = 1.0;
+                        $mandatoryMissed++;
+                    } elseif ($event->type === 'Major') {
+                        $multiplier = 0.8;
+                    } else {
+                        $multiplier = 0.5;
+                    }
+
+                    // Branch 2: Escalation Logic (The more absences, the higher the weight)
+                    if ($absenceSequence >= 2) $multiplier += 0.2;
+                    if ($absenceSequence >= 4) $multiplier += 0.3;
+
+                    $computedFine += ($event->fine * $multiplier);
+                }
+            }
+
+            $student->absences = $absenceSequence;
+            $student->fine = round($computedFine, 2);
+            
+            // --- DECISION TREE RISK ASSESSMENT ---
+            $riskScore = ($student->absences * 10) + ($mandatoryMissed * 15);
+            $student->risk_level = $riskScore >= 40 ? 'High Risk' : ($riskScore >= 20 ? 'Warning' : 'Stable');
         }
 
         return response()->json($students);
@@ -93,12 +122,20 @@ class AdminController extends Controller implements HasMiddleware
             'month' => 'required|string',
             'type' => 'required|in:Mandatory,Major,Voluntary',
             'fine' => 'required|integer|min:20|max:50',
-            'start_time' => 'required|string', // Format H:i
-            'duration' => 'required|integer|min:1|max:24',
+            'is_single_scan' => 'boolean',
+            // Single Window
+            'start_time' => 'nullable|string',
+            'end_time' => 'nullable|string',
+            // Session windows
+            'morn_in_start' => 'nullable|string',
+            'morn_in_end' => 'nullable|string',
+            'morn_out_start' => 'nullable|string',
+            'morn_out_end' => 'nullable|string',
+            'aft_in_start' => 'nullable|string',
+            'aft_in_end' => 'nullable|string',
+            'aft_out_start' => 'nullable|string',
+            'aft_out_end' => 'nullable|string',
         ]);
-
-        $startDateTime = \Carbon\Carbon::parse($request->date . ' ' . $request->start_time);
-        $endDateTime = (clone $startDateTime)->addHours($request->duration);
 
         $event = Event::create([
             'name' => $request->name,
@@ -106,8 +143,17 @@ class AdminController extends Controller implements HasMiddleware
             'month' => $request->month,
             'type' => $request->type,
             'fine' => $request->fine,
-            'start_time' => $startDateTime,
-            'end_time' => $endDateTime,
+            'is_single_scan' => $request->is_single_scan ?? true,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'morn_in_start' => $request->morn_in_start,
+            'morn_in_end' => $request->morn_in_end,
+            'morn_out_start' => $request->morn_out_start,
+            'morn_out_end' => $request->morn_out_end,
+            'aft_in_start' => $request->aft_in_start,
+            'aft_in_end' => $request->aft_in_end,
+            'aft_out_start' => $request->aft_out_start,
+            'aft_out_end' => $request->aft_out_end,
         ]);
 
         return response()->json($event, 201);
@@ -169,16 +215,20 @@ class AdminController extends Controller implements HasMiddleware
             'event_id' => 'required|integer',
             'student_name' => 'required|string',
             'year_and_section' => 'required|string',
+            'log_type' => 'nullable|string',
             'scanned_at' => 'nullable|string',
         ]);
+
+        $logType = $request->log_type ?? 'Morning In';
 
         // Check for duplicate
         $exists = AttendanceLog::where('student_id', $request->student_id)
             ->where('event_id', $request->event_id)
+            ->where('log_type', $logType)
             ->exists();
 
         if ($exists) {
-            return response()->json(['error' => 'Student already logged for this event.'], 409);
+            return response()->json(['error' => "Student already logged for {$logType} in this event."], 409);
         }
 
         $log = AttendanceLog::create([
@@ -186,10 +236,10 @@ class AdminController extends Controller implements HasMiddleware
             'event_id' => $request->event_id,
             'student_name' => $request->student_name,
             'year_and_section' => $request->year_and_section,
+            'log_type' => $logType,
             'scanned_at' => $request->scanned_at ?? now()->format('h:i A'),
         ]);
 
-        // Increment student absences tracking is handled via events not present count
         return response()->json($log, 201);
     }
 
@@ -215,7 +265,7 @@ class AdminController extends Controller implements HasMiddleware
     public function dashboardData(Request $request)
     {
         $eventId = $request->event_id;
-        $presentCount = $eventId ? AttendanceLog::where('event_id', $eventId)->count() : 0;
+        $presentCount = $eventId ? AttendanceLog::where('event_id', $eventId)->distinct('student_id')->count('student_id') : 0;
         $totalStudents = Student::count();
 
         // Dynamic AI Fine Computation
@@ -225,25 +275,37 @@ class AdminController extends Controller implements HasMiddleware
         $atRisk = 0;
 
         if ($totalEvents > 0) {
-            $totalEventFines = Event::sum('fine');
-
-            $attendanceCounts = AttendanceLog::join('events', 'attendance_logs.event_id', '=', 'events.id')
-                ->select('attendance_logs.student_id', \Illuminate\Support\Facades\DB::raw('sum(events.fine) as attended_fine'), \Illuminate\Support\Facades\DB::raw('count(*) as present_count'))
-                ->groupBy('attendance_logs.student_id')
-                ->get()
-                ->keyBy('student_id');
+            $allEvents = Event::orderBy('date', 'asc')->get();
+            $logs = AttendanceLog::all()->groupBy('student_id');
 
             foreach ($students as $s) {
-                $present = $attendanceCounts[$s->student_id]->present_count ?? 0;
-                $attendedFine = $attendanceCounts[$s->student_id]->attended_fine ?? 0;
+                $studentLogs = $logs[$s->student_id] ?? collect();
+                $presentEventIds = $studentLogs->pluck('event_id')->toArray();
 
-                $s->absences = max(0, $totalEvents - $present);
-                $exactFine = max(0, $totalEventFines - $attendedFine);
+                // --- DECISION TREE RE-CALCULATION (FOR ACCURACY) ---
+                $computedFine = 0;
+                $absenceSequence = 0;
+                $mandatoryMissed = 0;
 
-                if ($exactFine > 0) {
-                    $totalFines += $exactFine;
+                foreach ($allEvents as $event) {
+                    if (!in_array($event->id, $presentEventIds)) {
+                        $absenceSequence++;
+                        $multiplier = 1.0;
+                        if ($event->type === 'Mandatory') { $multiplier = 1.0; $mandatoryMissed++; }
+                        elseif ($event->type === 'Major') { $multiplier = 0.8; }
+                        else { $multiplier = 0.5; }
+
+                        if ($absenceSequence >= 2) $multiplier += 0.2;
+                        $computedFine += ($event->fine * $multiplier);
+                    }
                 }
-                if ($s->absences >= 2) {
+
+                $s->absences = $absenceSequence;
+                $s->fine = round($computedFine, 2);
+                $totalFines += $s->fine;
+
+                $riskScore = ($s->absences * 10) + ($mandatoryMissed * 15);
+                if ($riskScore >= 40) {
                     $atRisk++;
                 }
             }

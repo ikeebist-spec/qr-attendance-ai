@@ -3,5 +3,5 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class AttendanceLog extends Model
 {
-    protected $fillable = ['student_id', 'event_id', 'student_name', 'year_and_section', 'scanned_at'];
+    protected $fillable = ['student_id', 'event_id', 'student_name', 'year_and_section', 'log_type', 'scanned_at'];
 }

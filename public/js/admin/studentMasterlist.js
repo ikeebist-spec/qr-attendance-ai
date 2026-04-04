@@ -75,7 +75,7 @@ window.renderStudents = function () {
     let html = '';
     sections.forEach((section, index) => {
         const folderId = `masterlist-sec-${index}`;
-        const students = grouped[section];
+        const students = grouped[section].sort((a, b) => a.name.localeCompare(b.name));
 
         // Folder Header Row (Excel Style)
         html += `
